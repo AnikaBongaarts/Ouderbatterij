@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>De Ouderbatterij — Efteling Score Tracker</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          eft: {
+            green: '#123524',
+            green2: '#1b4d34',
+            gold: '#d4af37',
+            gold2: '#f2d675',
+            cream: '#f7f3e8'
+          }
+        },
+        fontFamily: {
+          display: ['Georgia', 'serif']
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { background: radial-gradient(circle at top, #1b4d34 0%, #0d2419 70%); }
+  .gold-border { border: 1px solid rgba(212,175,55,0.4); }
+  #map { height: 380px; border-radius: 0.75rem; z-index: 0; }
+  .leaflet-popup-content-wrapper { background: #123524; color: #f7f3e8; border-radius: 0.5rem; }
+  .leaflet-popup-tip { background: #123524; }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #d4af37; border: 2px solid #123524; cursor: pointer; margin-top: -8px;
+  }
+  input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 4px; background: #3a6b4f; }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%; background: #d4af37; border: 2px solid #123524; cursor: pointer;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform: translateY(0);} }
+</style>
+</head>
+<body class="min-h-screen text-eft-cream font-sans pb-16">
+
+<header class="px-4 pt-8 pb-4 text-center">
+  <h1 class="font-display text-3xl sm:text-4xl font-bold text-eft-gold tracking-wide drop-shadow">🏰 De Ouderbatterij</h1>
+  <p class="text-eft-cream/70 mt-1 text-sm sm:text-base">Efteling Score Tracker — hoeveel energie heeft dit ritje gekost (of gegeven)?</p>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 space-y-6">
+
+  <!-- MAP CARD -->
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-4 shadow-xl">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h2 class="font-display text-xl text-eft-gold">Plattegrond</h2>
+      <button id="locateBtn" class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-4 py-2 rounded-lg shadow transition">
+        📍 Vind mijn locatie
+      </button>
+    </div>
+    <div id="map"></div>
+    <p id="locStatus" class="text-xs text-eft-cream/60 mt-2"></p>
+  </section>
+
+  <!-- FORM CARD -->
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+    <h2 class="font-display text-xl text-eft-gold mb-4">Bezoek registreren</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm mb-1 text-eft-cream/80">Attractie / eetgelegenheid</label>
+        <select id="attractionSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-eft-gold">
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1 text-eft-cream/80">Datum & tijd</label>
+        <input id="dateTimeInput" type="datetime-local" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-eft-gold" />
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        Score: <span id="scoreValue" class="text-eft-gold font-bold text-lg">50</span> / 100
+      </label>
+      <input id="scoreSlider" type="range" min="0" max="100" value="50" class="w-full" />
+      <div class="flex justify-between text-xs text-eft-cream/50 mt-1">
+        <span>😵 Leeg</span><span>🙂 Prima</span><span>🔋 Volle batterij</span>
+      </div>
+    </div>
+
+    <button id="saveBtn" class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition">
+      💾 Bezoek opslaan
+    </button>
+    <span id="savedMsg" class="ml-3 text-sm text-eft-gold2 hidden">Opgeslagen!</span>
+  </section>
+
+  <!-- CHART CARD -->
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+    <h2 class="font-display text-xl text-eft-gold mb-4">Scoreverloop</h2>
+    <canvas id="scoreChart" height="130"></canvas>
+  </section>
+
+  <!-- TABLE CARD -->
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-display text-xl text-eft-gold">Geschiedenis</h2>
+      <button id="clearBtn" class="text-xs text-eft-cream/50 hover:text-red-300 underline">Alles wissen</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-eft-gold/80 border-b border-eft-gold/30">
+            <th class="text-left py-2 pr-2">Attractie / eten</th>
+            <th class="text-left py-2 pr-2">Tijdstip</th>
+            <th class="text-left py-2 pr-2">Score</th>
+            <th class="py-2"></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <p id="emptyMsg" class="text-eft-cream/50 text-sm py-4 text-center">Nog geen bezoeken opgeslagen.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ---------- CDN LOAD GUARD ----------
+window.addEventListener('DOMContentLoaded', () => {
+  const missing = [];
+  if (typeof L === 'undefined') missing.push('Leaflet (kaart)');
+  if (typeof Chart === 'undefined') missing.push('Chart.js (grafieken)');
+  if (missing.length) {
+    const warn = document.createElement('div');
+    warn.className = 'max-w-5xl mx-auto px-4';
+    warn.innerHTML = `<div class="bg-red-900/70 border border-red-400 text-red-100 rounded-xl p-4 mb-4 text-sm">
+      ⚠️ Kon de volgende bibliotheek(en) niet laden: <b>${missing.join(', ')}</b>.
+      Controleer je internetverbinding, adblocker of contentblocker-instellingen en herlaad de pagina.
+    </div>`;
+    document.querySelector('main').prepend(warn);
+  }
+});
+</script>
+<script>
+// ---------- DATA ----------
+// Let op: coördinaten zijn met de hand benaderd binnen het parkgebied van de Efteling
+// (geen officiële, exact vermeten GPS-data) — nauwkeurig genoeg voor deze tracker.
+const POIS = [
+  // --- Attracties ---
+  { name: "Baron 1898", type: "attractie", lat: 51.64876, lng: 5.04594 },
+  { name: "Joris en de Draak", type: "attractie", lat: 51.65065, lng: 5.04716 },
+  { name: "Symbolica", type: "attractie", lat: 51.65038, lng: 5.04996 },
+  { name: "Python", type: "attractie", lat: 51.65114, lng: 5.05068 },
+  { name: "Droomvlucht", type: "attractie", lat: 51.64988, lng: 5.04982 },
+  { name: "Danse Macabre", type: "attractie", lat: 51.64791, lng: 5.05088 },
+  { name: "De Vliegende Hollander", type: "attractie", lat: 51.64780, lng: 5.04540 },
+  { name: "Vogel Rok", type: "attractie", lat: 51.65200, lng: 5.05180 },
+  { name: "Villa Volta", type: "attractie", lat: 51.64850, lng: 5.05050 },
+  { name: "Fabula", type: "attractie", lat: 51.64980, lng: 5.05080 },
+  { name: "Spookslot", type: "attractie", lat: 51.64830, lng: 5.05000 },
+  { name: "Max & Moritz", type: "attractie", lat: 51.64720, lng: 5.04630 },
+  { name: "Piraña", type: "attractie", lat: 51.64650, lng: 5.04800 },
+  { name: "Fata Morgana", type: "attractie", lat: 51.64930, lng: 5.04920 },
+  { name: "Sirocco", type: "attractie", lat: 51.65220, lng: 5.05230 },
+  { name: "The Six Swans", type: "attractie", lat: 51.65080, lng: 5.05000 },
+  { name: "Gondoletta", type: "attractie", lat: 51.65000, lng: 5.04700 },
+  { name: "Stoomcarrousel", type: "attractie", lat: 51.64950, lng: 5.04650 },
+  { name: "Halve Maen", type: "attractie", lat: 51.64780, lng: 5.04500 },
+  { name: "De Oude Tufferbaan", type: "attractie", lat: 51.64700, lng: 5.04550 },
+  { name: "Monorail", type: "attractie", lat: 51.65100, lng: 5.04900 },
+  { name: "Sprookjesbos", type: "attractie", lat: 51.64900, lng: 5.04550 },
+  { name: "Aquanura", type: "attractie", lat: 51.64800, lng: 5.04750 },
+  { name: "Archipel", type: "attractie", lat: 51.65250, lng: 5.05300 },
+  { name: "Raveleijn", type: "attractie", lat: 51.64670, lng: 5.04680 },
+
+  // --- Eten & drinken ---
+  { name: "Kashba", type: "eten", lat: 51.65030, lng: 5.05200 },
+  { name: "Het Wapen van Raveleijn", type: "eten", lat: 51.64670, lng: 5.04680 },
+  { name: "Polles Keuken", type: "eten", lat: 51.65000, lng: 5.05000 },
+  { name: "Pinokkio's Pizza & Pasta", type: "eten", lat: 51.64780, lng: 5.04350 },
+  { name: "Panorama à la carte", type: "eten", lat: 51.65030, lng: 5.05220 },
+  { name: "In den Swarte Kat", type: "eten", lat: 51.64850, lng: 5.04980 },
+  { name: "Restaurant Fabula", type: "eten", lat: 51.64990, lng: 5.05090 },
+  { name: "Bäckerei Krümel", type: "eten", lat: 51.64700, lng: 5.04620 },
+  { name: "'t Verwende Nest!", type: "eten", lat: 51.65120, lng: 5.04750 },
+  { name: "Frau Boltes Küche", type: "eten", lat: 51.65200, lng: 5.05000 },
+  { name: "De Gelaarsde Kat", type: "eten", lat: 51.64880, lng: 5.04530 },
+  { name: "Het Witte Paard", type: "eten", lat: 51.64920, lng: 5.04680 },
+  { name: "Kleyne Klaroen", type: "eten", lat: 51.64870, lng: 5.04520 },
+  { name: "'t Melkhuysje", type: "eten", lat: 51.64840, lng: 5.04620 },
+  { name: "'t Poffertje", type: "eten", lat: 51.64950, lng: 5.04750 },
+  { name: "Toko Pagoda", type: "eten", lat: 51.65280, lng: 5.05180 },
+  { name: "Station De Oost", type: "eten", lat: 51.65100, lng: 5.05250 }
+];
+
+const STORAGE_KEY = "ouderbatterij_visits";
+const DETECT_RADIUS_M = 50;
+
+// Deterministische kleur per naam (voor puntkleuren in de scoreverloop-grafiek)
+function colorForName(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 60%)`;
+}
+
+// ---------- MAP ----------
+const map = L.map('map').setView([51.6495, 5.0485], 16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+const goldIcon = L.divIcon({
+  html: '<div style="background:#d4af37;width:16px;height:16px;border-radius:50%;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,0.5)"></div>',
+  className: '', iconSize: [16,16], iconAnchor: [8,8]
+});
+const foodIcon = L.divIcon({
+  html: '<div style="background:#e2725b;width:14px;height:14px;border-radius:3px;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,0.5)"></div>',
+  className: '', iconSize: [14,14], iconAnchor: [7,7]
+});
+
+const poiMarkers = {};
+POIS.forEach(p => {
+  const icon = p.type === 'eten' ? foodIcon : goldIcon;
+  const label = p.type === 'eten' ? `🍴 ${p.name}` : `🎢 ${p.name}`;
+  const m = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(`<b>${label}</b>`);
+  m.on('click', () => {
+    attractionSelect.value = p.name;
+    locStatus.textContent = `🖱️ "${p.name}" geselecteerd via kaart.`;
+  });
+  poiMarkers[p.name] = m;
+});
+
+let userMarker = null;
+let userCircle = null;
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+const locStatus = document.getElementById('locStatus');
+const attractionSelect = document.getElementById('attractionSelect');
+
+(() => {
+  const groupAttracties = document.createElement('optgroup');
+  groupAttracties.label = '🎢 Attracties';
+  const groupEten = document.createElement('optgroup');
+  groupEten.label = '🍴 Eten & drinken';
+
+  POIS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    (p.type === 'eten' ? groupEten : groupAttracties).appendChild(opt);
+  });
+
+  attractionSelect.appendChild(groupAttracties);
+  attractionSelect.appendChild(groupEten);
+})();
+
+document.getElementById('locateBtn').addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    locStatus.textContent = "Geolocation wordt niet ondersteund door je browser.";
+    return;
+  }
+  locStatus.textContent = "Locatie zoeken...";
+  navigator.geolocation.watchPosition(pos => {
+    const { latitude, longitude, accuracy } = pos.coords;
+    if (!userMarker) {
+      userMarker = L.circleMarker([latitude, longitude], {
+        radius: 8, color: '#4f9dff', fillColor: '#4f9dff', fillOpacity: 0.9, weight: 2
+      }).addTo(map).bindPopup("Jij bent hier");
+      userCircle = L.circle([latitude, longitude], { radius: accuracy, color: '#4f9dff', fillOpacity: 0.08, weight: 1 }).addTo(map);
+      map.setView([latitude, longitude], 17);
+    } else {
+      userMarker.setLatLng([latitude, longitude]);
+      userCircle.setLatLng([latitude, longitude]);
+      userCircle.setRadius(accuracy);
+    }
+
+    let closest = null, closestDist = Infinity;
+    POIS.forEach(p => {
+      const d = haversine(latitude, longitude, p.lat, p.lng);
+      if (d < closestDist) { closestDist = d; closest = p; }
+    });
+
+    if (closest && closestDist <= DETECT_RADIUS_M) {
+      attractionSelect.value = closest.name;
+      locStatus.textContent = `📍 Gedetecteerd bij "${closest.name}" (${closestDist.toFixed(0)}m)`;
+    } else {
+      locStatus.textContent = `Live locatie actief. Dichtstbijzijnde attractie: ${closest ? closest.name : '-'} (${closestDist.toFixed(0)}m)`;
+    }
+  }, err => {
+    locStatus.textContent = "Kon locatie niet bepalen: " + err.message;
+  }, { enableHighAccuracy: true, maximumAge: 5000 });
+});
+
+// ---------- DATE/TIME AUTO-FILL ----------
+function nowLocalISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+document.getElementById('dateTimeInput').value = nowLocalISO();
+
+// ---------- SLIDER ----------
+const slider = document.getElementById('scoreSlider');
+const scoreValue = document.getElementById('scoreValue');
+slider.addEventListener('input', () => scoreValue.textContent = slider.value);
+
+// ---------- STORAGE ----------
+function loadVisits() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveVisits(visits) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(visits));
+}
+
+let visits = loadVisits();
+
+function renderAll() {
+  renderTable();
+  renderChart();
+}
+
+function renderTable() {
+  const body = document.getElementById('historyBody');
+  const emptyMsg = document.getElementById('emptyMsg');
+  body.innerHTML = '';
+  const sorted = [...visits].sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime));
+  if (sorted.length === 0) { emptyMsg.classList.remove('hidden'); return; }
+  emptyMsg.classList.add('hidden');
+  sorted.forEach(v => {
+    const tr = document.createElement('tr');
+    tr.className = "border-b border-eft-gold/10 fade-in";
+    const dt = new Date(v.dateTime);
+    const formatted = dt.toLocaleString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    tr.innerHTML = `
+      <td class="py-2 pr-2">${v.attraction}</td>
+      <td class="py-2 pr-2 text-eft-cream/70">${formatted}</td>
+      <td class="py-2 pr-2"><span class="text-eft-gold font-semibold">${v.score}</span></td>
+      <td class="py-2 text-right"><button data-id="${v.id}" class="delBtn text-eft-cream/40 hover:text-red-300">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  document.querySelectorAll('.delBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      visits = visits.filter(v => v.id !== btn.dataset.id);
+      saveVisits(visits);
+      renderAll();
+    });
+  });
+}
+
+let chart = null;
+function renderChart() {
+  const sorted = [...visits].sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+  const labels = sorted.map(v => v.attraction);
+  const data = sorted.map(v => v.score);
+  const pointColors = sorted.map(v => colorForName(v.attraction));
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Score',
+        data,
+        borderColor: '#d4af37',
+        backgroundColor: 'rgba(212,175,55,0.15)',
+        pointBackgroundColor: pointColors,
+        pointBorderColor: '#123524',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#f7f3e8' } },
+        tooltip: {
+          callbacks: {
+            title: items => {
+              const v = sorted[items[0].dataIndex];
+              return `${v.attraction}`;
+            },
+            label: item => {
+              const v = sorted[item.dataIndex];
+              const dt = new Date(v.dateTime).toLocaleString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+              return [`Score: ${v.score}`, dt];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#f7f3e8aa',
+            maxRotation: 60,
+            minRotation: 40,
+            autoSkip: true,
+            font: { size: 10 }
+          },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: { min: 0, max: 100, ticks: { color: '#f7f3e8aa' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function makeId() {
+  return 'v' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+}
+
+// ---------- SAVE ----------
+document.getElementById('saveBtn').addEventListener('click', () => {
+  try {
+    const attraction = attractionSelect.value;
+    const dateTime = document.getElementById('dateTimeInput').value;
+    const score = parseInt(slider.value, 10);
+    if (!attraction || !dateTime) return;
+
+    visits.push({ id: makeId(), attraction, dateTime, score });
+    saveVisits(visits);
+    renderAll();
+
+    const msg = document.getElementById('savedMsg');
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 1800);
+
+    document.getElementById('dateTimeInput').value = nowLocalISO();
+  } catch (err) {
+    console.error('Opslaan mislukt:', err);
+    alert('Er ging iets mis bij het opslaan: ' + err.message);
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (confirm("Weet je zeker dat je alle bezoeken wilt wissen?")) {
+    visits = [];
+    saveVisits(visits);
+    renderAll();
+  }
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
