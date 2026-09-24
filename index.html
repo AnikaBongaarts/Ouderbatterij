@@ -47,7 +47,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       </div>
       <div class="flex gap-2">
         <button id="locateBtn" class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition">📍 Mijn locatie</button>
-        <button id="musicBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🔇 Muziek uit</button>
+        <button id="musicBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🔊 Muziek aan</button>
+        <a id="sunoLink" href="https://suno.com/song/0d769865-fc65-4294-b673-ec42d2c9cbca?sh=6JGMz8S4RnPbp0bZ" target="_blank" rel="noopener" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🎵 Open Ouderbatterij</a>
       </div>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
@@ -65,7 +66,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
     <div id="map"></div>
     <p id="locStatus" class="text-xs text-eft-cream/60 mt-2"></p>
-    <p class="text-[11px] text-eft-cream/40 mt-1">De Efteling biedt voor actuele kaartinformatie de Efteling-app; deze tool gebruikt een eigen Leaflet-kaart. </p>
+    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+      <span id="musicStatus" class="text-eft-cream/50">🎵 Ouderbatterij staat klaar als achtergrondmuziek. Klik op “Muziek aan” om te starten.</span>
+    </div>
+    <p class="text-[11px] text-eft-cream/40 mt-1">De Efteling biedt voor actuele kaartinformatie de Efteling-app; deze tool gebruikt een eigen Leaflet-kaart.</p>
   </section>
 
   <!-- REGISTREREN -->
@@ -117,7 +121,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   </section>
 
   <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <h2 class="font-display text-xl text-eft-gold mb-4">Scoreverloop</h2>
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h2 class="font-display text-xl text-eft-gold">Scoreverloop</h2><button id="downloadChartBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">⬇️ Plot downloaden</button></div>
     <canvas id="scoreChart" height="120"></canvas>
   </section>
 
@@ -132,7 +136,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   Deze tool is gebouwd met AI2 (Anika & Artificiële intelligentie)
 </footer>
 
-<iframe id="musicEmbed" class="music-embed" title="Achtergrondmuziek" allow="autoplay" src="https://suno.com/embed/0d769865-fc65-4294-b673-ec42d2c9cbca?autoplay=1"></iframe>
+<audio id="backgroundMusic" src="Ouderbatterij.mp3" loop preload="auto"></audio>
 
 <script>
 // Actuele namen zijn gebaseerd op de door Efteling gepubliceerde overzichten; kaartposities zijn praktische, benaderde Leaflet-posities.
@@ -238,6 +242,29 @@ function iconFor(type){
  const shape=type==='restaurant'?'border-radius:4px':type==='show'?'border-radius:50%':type==='souvenir'?'border-radius:2px;transform:rotate(45deg)':'border-radius:50%';
  return L.divIcon({html:`<div style="background:${bg};width:15px;height:15px;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,.5);${shape}"></div>`,className:'',iconSize:[15,15],iconAnchor:[7,7]});
 }
+// Achtergrondmuziek: het meegeleverde MP3-bestand wordt lokaal gebruikt.
+const backgroundMusic=document.getElementById('backgroundMusic');
+const musicBtn=document.getElementById('musicBtn');
+const musicStatus=document.getElementById('musicStatus');
+let musicOn=false;
+async function playMusic(){
+  try{
+    await backgroundMusic.play();
+    musicOn=true;
+    musicBtn.textContent='🔇 Muziek uit';
+    musicStatus.textContent='🎵 Ouderbatterij speelt nu op de achtergrond.';
+  }catch(err){
+    musicStatus.textContent='⚠️ De muziek kon niet starten. Controleer of Ouderbatterij.mp3 naast index.html staat.';
+  }
+}
+function pauseMusic(){
+  backgroundMusic.pause();
+  musicOn=false;
+  musicBtn.textContent='🔊 Muziek aan';
+  musicStatus.textContent='🎵 Muziek staat uit.';
+}
+musicBtn.addEventListener('click',()=>musicOn?pauseMusic():playMusic());
+
 const markers=[];
 const poiMarkers={};
 function popupFor(p){return `<b>${TYPE_LABEL[p.type]||''} ${p.name}</b><br><span style="opacity:.75">${p.realm||''}</span>`}
@@ -286,104 +313,112 @@ function nowLocalISO(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimez
 document.getElementById('dateTimeInput').value=nowLocalISO();
 
 let state=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{days:[todayKey()],visits:[],active:todayKey()};
-if(!state.days.includes(todayKey())) state.days.unshift(todayKey());
-if(!state.active)state.active=todayKey();
+// Elke kalenderdag wordt automatisch een nieuwe bezoekdag.
+// Zo hoef je nooit zelf op een + te drukken.
+const today=todayKey();
+if(!Array.isArray(state.days)) state.days=[];
+if(!state.days.includes(today)) state.days.unshift(today);
+// Bij een nieuwe kalenderdag openen we automatisch op Vandaag.
+state.active=today;
 function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function dayVisits(day){return state.visits.filter(v=>v.day===day).sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))}
 function renderTabs(){
- const el=document.getElementById('dayTabs');el.innerHTML='';
- const overview=document.createElement('button');overview.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active==='__all__'?'tab-active':'bg-eft-green2'}`;overview.textContent='📚 Alle dagen';overview.onclick=()=>{state.active='__all__';renderAll()};el.appendChild(overview);
- const today=document.createElement('button');today.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===todayKey()?'tab-active':'bg-eft-green2'}`;today.textContent='📅 Vandaag';today.onclick=()=>{state.active=todayKey();renderAll()};el.appendChild(today);
- state.days.filter(d=>d!==todayKey()).sort().reverse().forEach(d=>{
-  const b=document.createElement('button');b.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===d?'tab-active':'bg-eft-green2'}`;b.textContent='📆 '+fmtDate(d);b.onclick=()=>{state.active=d;renderAll()};el.appendChild(b);
- });
- const add=document.createElement('button');add.className='px-3 py-2 rounded-lg bg-eft-gold text-eft-green font-bold day-tab';add.textContent='＋';add.title='Nieuwe dag toevoegen';add.onclick=addDay;el.appendChild(add);
+ const el=document.getElementById('dayTabs');
+ el.innerHTML='';
+
+ // Vandaag staat altijd vooraan. Alle eerdere bezoekdagen vormen automatisch
+ // de geschiedenis, gesorteerd van nieuw naar oud. Er is geen + knop nodig.
+ const today=todayKey();
+
+ const todayBtn=document.createElement('button');
+ todayBtn.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===today?'tab-active':'bg-eft-green2'}`;
+ todayBtn.textContent='Vandaag';
+ todayBtn.onclick=()=>{
+   state.active=today;
+   saveState();
+   renderAll();
+ };
+ el.appendChild(todayBtn);
+
+ state.days
+   .filter(d=>d!==today)
+   .sort((a,b)=>b.localeCompare(a))
+   .forEach(d=>{
+     const b=document.createElement('button');
+     b.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===d?'tab-active':'bg-eft-green2'}`;
+     b.textContent=fmtDate(d);
+     b.title='Bezoekgeschiedenis van '+fmtDate(d);
+     b.onclick=()=>{
+       state.active=d;
+       renderAll();
+     };
+     el.appendChild(b);
+   });
 }
-function addDay(){
- const raw=prompt('Welke datum wil je toevoegen? Gebruik bijvoorbeeld 24-09-2026 of 2026-09-24.');
- if(!raw)return;
- let d=raw.trim();
- if(/^\d{2}-\d{2}-\d{4}$/.test(d)){const [dd,mm,yyyy]=d.split('-');d=`${yyyy}-${mm}-${dd}`}
- if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||isNaN(new Date(d+'T12:00:00').getTime())){alert('Dat lijkt geen geldige datum.');return}
- if(!state.days.includes(d))state.days.push(d);
- state.active=d;saveState();renderAll();
-}
+
+
+let scoreChart=null;
 function renderDay(){
- const all=state.active==='__all__';
- document.getElementById('allDaysSection').classList.toggle('hidden',!all);
- document.getElementById('historyTitle').textContent=all?'Vandaag':(state.active===todayKey()?'Vandaag':fmtDate(state.active));
- document.getElementById('selectedDayLabel').textContent=all?'Selecteer een dagtab om een bezoek te registreren.':'Registreren voor '+fmtDate(state.active);
- const rows=all?[]:dayVisits(state.active);
- const body=document.getElementById('historyBody');body.innerHTML='';
- document.getElementById('emptyMsg').classList.toggle('hidden',all||rows.length>0);
- rows.forEach(v=>{
-  const tr=document.createElement('tr');tr.className='border-b border-eft-gold/10 fade-in';
-  const dt=new Date(v.dateTime);
-  tr.innerHTML=`<td class="py-2 pr-2 text-xs">${TYPE_LABEL[v.type]||v.type}</td><td class="py-2 pr-2">${escapeHtml(v.place)}</td><td class="py-2 pr-2 text-eft-cream/70">${dt.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</td><td class="py-2 pr-2"><span class="text-eft-gold font-semibold">${v.score}</span></td><td class="py-2 text-right"><button data-id="${v.id}" class="delBtn text-eft-cream/40 hover:text-red-300">✕</button></td>`;
-  body.appendChild(tr);
+ const day=state.active;
+ const visits=dayVisits(day);
+ document.getElementById('historyTitle').textContent=day===todayKey()?'Vandaag':fmtDate(day);
+ document.getElementById('selectedDayLabel').textContent='Actieve bezoekdag: '+(day===todayKey()?'Vandaag':fmtDate(day));
+ document.getElementById('daySummary').textContent=visits.length?`${visits.length} geregistreerde momenten · gemiddelde score ${Math.round(visits.reduce((a,v)=>a+Number(v.score||0),0)/visits.length)}/100`:'Nog geen momenten geregistreerd';
+ const body=document.getElementById('historyBody'); body.innerHTML='';
+ document.getElementById('emptyMsg').classList.toggle('hidden',visits.length>0);
+ visits.forEach(v=>{
+   const tr=document.createElement('tr'); tr.className='border-b border-eft-gold/10';
+   const d=new Date(v.dateTime);
+   tr.innerHTML=`<td class="py-2 pr-2">${TYPE_LABEL[v.type]||'✍️ Overig'}</td><td class="py-2 pr-2">${escapeHtml(v.place)}</td><td class="py-2 pr-2 whitespace-nowrap">${d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</td><td class="py-2 pr-2 font-bold text-eft-gold">${v.score}/100</td><td class="py-2 text-right"><button class="text-xs text-red-300 underline" data-delete="${v.id}">wissen</button></td>`;
+   body.appendChild(tr);
  });
- document.querySelectorAll('.delBtn').forEach(b=>b.onclick=()=>{state.visits=state.visits.filter(v=>v.id!==b.dataset.id);saveState();renderAll()});
- const avg=rows.length?Math.round(rows.reduce((s,v)=>s+v.score,0)/rows.length):0;
- document.getElementById('daySummary').textContent=all?'':`${rows.length} moment${rows.length===1?'':'en'} · gemiddelde score ${rows.length?avg:'–'}`;
+ body.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>{state.visits=state.visits.filter(v=>v.id!==btn.dataset.delete);renderAll();});
 }
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));}
 function renderAllDays(){
- const list=document.getElementById('allDaysList');list.innerHTML='';
- const days=[...new Set([...state.days,...state.visits.map(v=>v.day)])].sort().reverse();
- document.getElementById('allDaysCount').textContent=`${days.length} dagen`;
- days.forEach(d=>{
-  const vs=dayVisits(d),avg=vs.length?Math.round(vs.reduce((s,v)=>s+v.score,0)/vs.length):'–';
-  const div=document.createElement('button');div.className='w-full text-left bg-eft-green2/80 hover:bg-eft-green2 rounded-xl p-3 flex items-center justify-between';
-  div.innerHTML=`<span><b>${d===todayKey()?'📅 Vandaag':fmtDate(d)}</b><span class="block text-xs text-eft-cream/50">${vs.length} geregistreerde momenten</span></span><span class="text-eft-gold font-bold">${avg}</span>`;
-  div.onclick=()=>{state.active=d;renderAll()};list.appendChild(div);
+ const days=[...new Set(state.days)].sort((a,b)=>b.localeCompare(a));
+ const list=document.getElementById('allDaysList'); list.innerHTML='';
+ document.getElementById('allDaysCount').textContent=`${days.length} bezoekdag${days.length===1?'':'en'}`;
+ days.forEach(day=>{
+   const visits=dayVisits(day);
+   const avg=visits.length?Math.round(visits.reduce((a,v)=>a+Number(v.score||0),0)/visits.length):null;
+   const b=document.createElement('button'); b.className='w-full text-left bg-eft-green2/70 hover:bg-eft-green2 rounded-lg p-3 flex items-center justify-between';
+   b.innerHTML=`<span><strong>${day===todayKey()?'Vandaag':fmtDate(day)}</strong><span class="block text-xs text-eft-cream/50">${visits.length} moment${visits.length===1?'':'en'}</span></span><span class="text-eft-gold font-bold">${avg===null?'—':avg+'/100'}</span>`;
+   b.onclick=()=>{state.active=day;renderAll();}; list.appendChild(b);
  });
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-let chart=null;
 function renderChart(){
- const rows=state.active==='__all__'?state.visits.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime)):dayVisits(state.active);
- const ctx=document.getElementById('scoreChart').getContext('2d');if(chart)chart.destroy();
- chart=new Chart(ctx,{type:'line',data:{labels:rows.map(v=>v.place),datasets:[{label:'Score',data:rows.map(v=>v.score),borderColor:'#d4af37',backgroundColor:'rgba(212,175,55,.15)',pointRadius:6,tension:.3,fill:true}]},options:{responsive:true,plugins:{legend:{labels:{color:'#f7f3e8'}},tooltip:{callbacks:{label:i=>`Score: ${i.raw}`}}},scales:{x:{ticks:{color:'#f7f3e8aa',maxRotation:60,minRotation:40,autoSkip:true,font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:100,ticks:{color:'#f7f3e8aa'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+ const ctx=document.getElementById('scoreChart');
+ if(scoreChart) scoreChart.destroy();
+ const visits=dayVisits(state.active);
+ scoreChart=new Chart(ctx,{type:'line',data:{labels:visits.map(v=>new Date(v.dateTime).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})),datasets:[{label:'Batterijscore',data:visits.map(v=>Number(v.score)),tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{color:'#f7f3e8'}},x:{ticks:{color:'#f7f3e8'}}},plugins:{legend:{labels:{color:'#f7f3e8'}}}}});
 }
-document.getElementById('saveBtn').onclick=()=>{
- if(state.active==='__all__'){alert('Kies eerst Vandaag of een specifieke dag.');return}
- let place=placeSelect.value==='__custom__'?customPlace.value.trim():placeSelect.value;
- if(!place){alert('Vul een moment of vrije tekst in.');return}
- const dt=document.getElementById('dateTimeInput').value;if(!dt)return;
- const day=dt.slice(0,10);
- if(!state.days.includes(day))state.days.push(day);
- state.active=day;
- state.visits.push({id:'v'+Date.now()+Math.random().toString(36).slice(2),day,type:categorySelect.value,realm:realmSelect.value,place,dateTime:dt,score:+document.getElementById('scoreSlider').value});
- saveState();renderAll();
- const msg=document.getElementById('savedMsg');msg.classList.remove('hidden');setTimeout(()=>msg.classList.add('hidden'),1600);
- document.getElementById('dateTimeInput').value=nowLocalISO();
-};
-document.getElementById('clearDayBtn').onclick=()=>{
- if(state.active==='__all__')return;
- if(confirm('Alle registraties van deze dag wissen?')){state.visits=state.visits.filter(v=>v.day!==state.active);saveState();renderAll()}
-};
-document.getElementById('scoreSlider').oninput=e=>document.getElementById('scoreValue').textContent=e.target.value;
-
-let userMarker=null,userCircle=null;
-function haversine(a,b,c,d){const R=6371000,toRad=x=>x*Math.PI/180,dLat=toRad(c-a),dLon=toRad(d-b),x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
-document.getElementById('locateBtn').onclick=()=>{
- if(!navigator.geolocation){locStatus.textContent='Geolocation wordt niet ondersteund door je browser.';return}
- locStatus.textContent='Locatie zoeken...';
- navigator.geolocation.getCurrentPosition(pos=>{
-  const {latitude,longitude,accuracy}=pos.coords;
-  if(!userMarker){userMarker=L.circleMarker([latitude,longitude],{radius:8,color:'#4f9dff',fillColor:'#4f9dff',fillOpacity:.9,weight:2}).addTo(map).bindPopup('Jij bent hier');userCircle=L.circle([latitude,longitude],{radius:accuracy,color:'#4f9dff',fillOpacity:.08,weight:1}).addTo(map)}else{userMarker.setLatLng([latitude,longitude]);userCircle.setLatLng([latitude,longitude]);userCircle.setRadius(accuracy)}
-  map.setView([latitude,longitude],17);
-  let closest=null,dist=Infinity;POIS.forEach(p=>{const x=haversine(latitude,longitude,p.lat,p.lng);if(x<dist){dist=x;closest=p}});
-  locStatus.textContent=closest?`📍 Dichtstbijzijnde: "${closest.name}" (${dist.toFixed(0)} m)`: 'Live locatie actief.';
- },err=>locStatus.textContent='Kon locatie niet bepalen: '+err.message,{enableHighAccuracy:true,maximumAge:5000});
-};
-
-let musicOn=true;
-document.getElementById('musicBtn').onclick=()=>{
- musicOn=!musicOn;
- document.getElementById('musicBtn').textContent=musicOn?'🔊 Muziek aan':'🔇 Muziek uit';
- if(musicOn){musicEmbed.contentWindow?.postMessage({type:'play'},'*');try{musicEmbed.src='https://suno.com/embed/0d769865-fc65-4294-b673-ec42d2c9cbca?autoplay=1'}catch{}}
- else{musicEmbed.contentWindow?.postMessage({type:'pause'},'*');musicEmbed.src='about:blank'}
-};
+function downloadChart(){
+ if(!scoreChart) return;
+ const a=document.createElement('a'); a.href=scoreChart.toBase64Image('image/png',1); a.download=`ouderbatterij-${state.active}-scoreverloop.png`; a.click();
+}
+document.getElementById('downloadChartBtn').addEventListener('click',downloadChart);
+document.getElementById('scoreSlider').addEventListener('input',e=>document.getElementById('scoreValue').textContent=e.target.value);
+document.getElementById('saveBtn').addEventListener('click',()=>{
+ const type=document.getElementById('categorySelect').value; const select=document.getElementById('placeSelect');
+ const place=select.value==='__custom__'?document.getElementById('customPlace').value.trim():select.value;
+ if(!place){alert('Kies of vul eerst in wat je hebt gedaan.');return;}
+ const dateTime=document.getElementById('dateTimeInput').value||nowLocalISO();
+ const day=dateTime.slice(0,10); if(!state.days.includes(day)) state.days.push(day);
+ state.visits.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),day,dateTime,type,realm:document.getElementById('realmSelect').value,place,score:Number(document.getElementById('scoreSlider').value)});
+ state.active=day; saveState(); document.getElementById('savedMsg').classList.remove('hidden'); setTimeout(()=>document.getElementById('savedMsg').classList.add('hidden'),1400); renderAll();
+});
+document.getElementById('clearDayBtn').addEventListener('click',()=>{
+ const day=state.active; if(!confirm(`Alle geregistreerde momenten van ${day===todayKey()?'vandaag':fmtDate(day)} wissen?`)) return;
+ state.visits=state.visits.filter(v=>v.day!==day);
+ if(day!==todayKey()) state.days=state.days.filter(d=>d!==day);
+ state.active=todayKey(); if(!state.days.includes(state.active)) state.days.unshift(state.active); renderAll();
+});
+document.getElementById('locateBtn').addEventListener('click',()=>{
+ if(!navigator.geolocation){document.getElementById('locStatus').textContent='📍 Locatie wordt niet ondersteund door deze browser.';return;}
+ document.getElementById('locStatus').textContent='📍 Locatie wordt opgehaald…';
+ navigator.geolocation.getCurrentPosition(pos=>{const ll=[pos.coords.latitude,pos.coords.longitude];L.marker(ll).addTo(map).bindPopup('📍 Jij bent hier').openPopup();map.setView(ll,17);document.getElementById('locStatus').textContent='📍 Jouw locatie is op de kaart gezet.';},()=>document.getElementById('locStatus').textContent='⚠️ Locatie kon niet worden opgehaald.');
+});
 
 function renderAll(){renderTabs();renderDay();renderAllDays();renderChart();saveState()}
 renderAll();
