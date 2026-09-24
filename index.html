@@ -3,609 +3,3757 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
 <title>De Ouderbatterij — Efteling Bezoektracker</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"
+>
+
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+
 <script>
-tailwind.config={theme:{extend:{colors:{eft:{green:'#123524',green2:'#1b4d34',gold:'#d4af37',gold2:'#f2d675',cream:'#f7f3e8'}},fontFamily:{display:['Georgia','serif']}}}}
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        eft: {
+          green: '#123524',
+          green2: '#1b4d34',
+          gold: '#d4af37',
+          gold2: '#f2d675',
+          cream: '#f7f3e8'
+        }
+      },
+      fontFamily: {
+        display: ['Georgia', 'serif']
+      }
+    }
+  }
+};
 </script>
+
 <style>
-body{background:radial-gradient(circle at top,#1b4d34 0%,#0d2419 70%)}
-.gold-border{border:1px solid rgba(212,175,55,.4)}
-#map{height:430px;border-radius:.75rem;z-index:0}
-.chart-wrap{position:relative;height:190px;width:100%}
-.overview-chart-wrap{position:relative;height:230px;width:100%}
-.day-checks{display:flex;flex-wrap:wrap;gap:.5rem}
-.day-check{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .7rem;border:1px solid rgba(212,175,55,.22);border-radius:.6rem;background:rgba(27,77,52,.65);cursor:pointer;user-select:none}
-.day-check:hover{background:rgba(27,77,52,.95)}
-.day-check input{accent-color:#d4af37}
-.leaflet-popup-content-wrapper{background:#123524;color:#f7f3e8;border-radius:.5rem}
-.leaflet-popup-tip{background:#123524}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#d4af37;border:2px solid #123524;cursor:pointer;margin-top:-8px}
-input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:4px;background:#3a6b4f}
-input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#d4af37;border:2px solid #123524;cursor:pointer}
-::-webkit-scrollbar{width:8px;height:8px}.gold-scroll::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb{background:#d4af37;border-radius:4px}
-.fade-in{animation:fadeIn .35s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.tab-active{background:#d4af37;color:#123524}.nav-tab{white-space:nowrap}.nav-tab:hover{background:#d4af37;color:#123524}
-.music-embed{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0}
+
+body {
+  background: radial-gradient(
+    circle at top,
+    #1b4d34 0%,
+    #0d2419 70%
+  );
+}
+
+.gold-border {
+  border: 1px solid rgba(212,175,55,.4);
+}
+
+#map {
+  height: 430px;
+  border-radius: .75rem;
+  z-index: 0;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 360px;
+  width: 100%;
+}
+
+.overview-chart-wrap {
+  position: relative;
+  height: 420px;
+  width: 100%;
+}
+
+.day-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.day-check {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem .7rem;
+  border: 1px solid rgba(212,175,55,.22);
+  border-radius: .6rem;
+  background: rgba(27,77,52,.65);
+  cursor: pointer;
+  user-select: none;
+}
+
+.day-check:hover {
+  background: rgba(27,77,52,.95);
+}
+
+.day-check input {
+  accent-color: #d4af37;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #123524;
+  color: #f7f3e8;
+  border-radius: .5rem;
+}
+
+.leaflet-popup-tip {
+  background: #123524;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid #123524;
+  cursor: pointer;
+  margin-top: -8px;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: #3a6b4f;
+}
+
+input[type=range]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid #123524;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 4px;
+}
+
+.tab-active {
+  background: #d4af37;
+  color: #123524;
+}
+
+.nav-tab {
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  background: #d4af37;
+  color: #123524;
+}
+
+.chart-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(247,243,232,.5);
+}
+
 </style>
 </head>
+
+
 <body class="min-h-screen text-eft-cream font-sans pb-10">
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
 <header class="px-4 pt-5 pb-4">
+
   <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+
     <div>
-      <h1 class="font-display text-3xl sm:text-4xl font-bold text-eft-gold tracking-wide drop-shadow">🏰 De Ouderbatterij</h1>
-      <p class="text-eft-cream/70 mt-1 text-sm sm:text-base">Efteling Bezoektracker — hoeveel energie heeft dit moment gekost (of gegeven)?</p>
+
+      <h1 class="font-display text-3xl sm:text-4xl font-bold text-eft-gold tracking-wide">
+        🏰 De Ouderbatterij
+      </h1>
+
+      <p class="text-eft-cream/70 mt-1 text-sm sm:text-base">
+        Efteling Bezoektracker — hoeveel energie heeft dit moment gekost (of gegeven)?
+      </p>
+
     </div>
-    <nav class="flex flex-wrap gap-2 bg-eft-green/60 gold-border rounded-xl p-1 shadow-xl" aria-label="Navigatie">
-      <button id="viewTodayBtn" class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold">🏰 Vandaag</button>
-      <button id="viewHistoryBtn" class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold">📚 Geschiedenis</button>
-      <button id="viewMultiBtn" class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold">📈 Meerdere dagen</button>
+
+
+    <nav
+      class="flex flex-wrap gap-2 bg-eft-green/60 gold-border rounded-xl p-1 shadow-xl"
+      aria-label="Navigatie"
+    >
+
+      <button
+        id="viewTodayBtn"
+        class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold"
+      >
+        🏰 Vandaag
+      </button>
+
+      <button
+        id="viewHistoryBtn"
+        class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold"
+      >
+        📚 Geschiedenis
+      </button>
+
+      <button
+        id="viewMultiBtn"
+        class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold"
+      >
+        📈 Meerdere dagen
+      </button>
+
     </nav>
+
   </div>
+
 </header>
 
+
+
 <main class="max-w-6xl mx-auto px-4 space-y-5">
-  <!-- GESCHIEDENIS -->
-  <div id="historyView" class="hidden space-y-5">
-    <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div>
-          <h2 class="font-display text-xl text-eft-gold">Geschiedenis van eerdere bezoeken</h2>
-          <p class="text-xs text-eft-cream/55">Kies een datum om dezelfde dagweergave met alle meetpunten terug te bekijken.</p>
-        </div>
-        <span id="historyCount" class="text-xs text-eft-cream/50"></span>
-      </div>
-      <div id="historyList" class="space-y-3"></div>
-      <p id="historyEmpty" class="hidden text-sm text-eft-cream/50 text-center py-6">Er zijn nog geen eerdere bezoeken opgeslagen.</p>
-    </section>
-  </div>
 
-  <!-- DAGWEERGAVE -->
-  <div id="dashboardView" class="space-y-5">
-  <!-- KAART -->
-  <section class="bg-eft-green/60 gold-border rounded-2xl p-4 shadow-xl">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <div>
-        <h2 class="font-display text-xl text-eft-gold">Plattegrond</h2>
-        <p class="text-xs text-eft-cream/55">Leaflet-kaart met attracties, eten, shows, souvenirs en rijken.</p>
-      </div>
-      <div class="flex gap-2">
-        <button id="locateBtn" class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition">📍 Mijn locatie</button>
-        <button id="musicBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🔊 Muziek aan</button>
-        <a id="sunoLink" href="https://suno.com/song/0d769865-fc65-4294-b673-ec42d2c9cbca?sh=6JGMz8S4RnPbp0bZ" target="_blank" rel="noopener" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🎵 Open Ouderbatterij</a>
-      </div>
-    </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
-      <label class="text-xs text-eft-cream/70">Categorie
-        <select id="mapCategory" class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2">
-          <option value="alle">Alles</option><option value="attractie">🎢 Attracties</option>
-          <option value="restaurant">🍴 Restaurants</option><option value="show">🎭 Parkshows</option><option value="souvenir">🛍️ Souvenirs</option><option value="rijk">🏰 Rijken</option>
-        </select>
-      </label>
-      <label class="text-xs text-eft-cream/70">Rijk
-        <select id="mapRealm" class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2">
-          <option value="alle">Alle rijken</option><option>Marerijk</option><option>Reizenrijk</option><option>Ruigrijk</option><option>Anderrijk</option><option>Fantasierijk</option>
-        </select>
-      </label>
-    </div>
-    <div id="map"></div>
-    <p id="locStatus" class="text-xs text-eft-cream/60 mt-2"></p>
-    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-      <span id="musicStatus" class="text-eft-cream/50">🎵 Ouderbatterij staat klaar als achtergrondmuziek. Klik op “Muziek aan” om te starten.</span>
-    </div>
-    <p class="text-[11px] text-eft-cream/40 mt-1">De Efteling biedt voor actuele kaartinformatie de Efteling-app; deze tool gebruikt een eigen Leaflet-kaart.</p>
-  </section>
 
-  <!-- REGISTREREN -->
+<!-- =========================================================
+     GESCHIEDENIS
+========================================================= -->
+
+<div id="historyView" class="hidden space-y-5">
+
   <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <div class="flex flex-wrap items-start justify-between gap-2">
-      <div><h2 class="font-display text-xl text-eft-gold">Bezoek registreren</h2><p id="selectedDayLabel" class="text-xs text-eft-cream/55 mt-1"></p></div>
-      <a href="https://www.efteling.com/nl/park/plattegrond" target="_blank" rel="noopener" class="text-xs text-eft-gold underline">Actuele Efteling-informatie ↗</a>
-    </div>
-    <div class="grid sm:grid-cols-2 gap-4 mt-4">
-      <div>
-        <label class="block text-sm mb-1 text-eft-cream/80">Categorie</label>
-        <select id="categorySelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
-          <option value="attractie">🎢 Attractie</option><option value="restaurant">🍴 Restaurant</option><option value="show">🎭 Parkshow</option><option value="souvenir">🛍️ Souvenirwinkel</option><option value="overig">✍️ Overig</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm mb-1 text-eft-cream/80">Rijk</label>
-        <select id="realmSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"><option value="">Onbekend / niet van toepassing</option><option>Marerijk</option><option>Reizenrijk</option><option>Ruigrijk</option><option>Anderrijk</option><option>Fantasierijk</option></select>
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-sm mb-1 text-eft-cream/80">Wat heb je gedaan?</label>
-        <select id="placeSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"></select>
-        <input id="customPlace" type="text" placeholder="Vrije tekst, bijvoorbeeld: ijsje bij de vijver" class="hidden mt-2 w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
-      </div>
-      <div>
-        <label class="block text-sm mb-1 text-eft-cream/80">Datum & tijd <span class="text-xs text-eft-cream/50">(automatisch ingevuld, aanpasbaar)</span></label>
-        <input id="dateTimeInput" type="datetime-local" required class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
-      </div>
-      <div>
-        <label class="block text-sm mb-1 text-eft-cream/80">Score: <span id="scoreValue" class="text-eft-gold font-bold text-lg">50</span> / 100</label>
-        <input id="scoreSlider" type="range" min="0" max="100" value="50" class="w-full mt-2">
-        <div class="flex justify-between text-xs text-eft-cream/50 mt-1"><span>😵 Leeg</span><span>🙂 Prima</span><span>🔋 Volle batterij</span></div>
-      </div>
-    </div>
-    <button id="saveBtn" class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition">💾 Bezoek opslaan</button>
-    <span id="savedMsg" class="ml-3 text-sm text-eft-gold2 hidden">Opgeslagen!</span>
-  </section>
 
-  <!-- DAGOVERZICHT -->
-  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-      <div><h2 id="historyTitle" class="font-display text-xl text-eft-gold">Vandaag</h2><p id="daySummary" class="text-xs text-eft-cream/55"></p></div>
-      <button id="clearDayBtn" class="text-xs text-eft-cream/50 hover:text-red-300 underline">Deze dag wissen</button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm"><thead><tr class="text-eft-gold/80 border-b border-eft-gold/30"><th class="text-left py-2 pr-2">Categorie</th><th class="text-left py-2 pr-2">Moment</th><th class="text-left py-2 pr-2">Tijdstip</th><th class="text-left py-2 pr-2">Score</th><th></th></tr></thead><tbody id="historyBody"></tbody></table>
-      <p id="emptyMsg" class="text-eft-cream/50 text-sm py-4 text-center">Nog geen bezoeken op deze dag.</p>
-    </div>
-  </section>
 
-  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <div><h2 class="font-display text-xl text-eft-gold">Scoreverloop</h2><p class="text-xs text-eft-cream/55">Het verloop van je batterij tijdens deze bezoekdag.</p></div>
-      <button id="downloadChartBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">⬇️ Plot downloaden</button>
-    </div>
-    <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
-  </section>
-  </div>
+      <div>
 
-  <!-- MEERDERE DAGEN -->
-  <div id="multiView" class="hidden space-y-5">
-  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <div><h2 class="font-display text-xl text-eft-gold">Overzicht meerdere dagen</h2><p class="text-xs text-eft-cream/55">Selecteer de bezoekdagen die je met elkaar wilt vergelijken.</p></div>
-      <div class="flex gap-2">
-        <button id="selectAllDaysBtn" class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition">Alles</button>
-        <button id="selectNoDaysBtn" class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition">Geen</button>
-        <button id="downloadOverviewChartBtn" class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition">⬇️ Download</button>
+        <h2 class="font-display text-xl text-eft-gold">
+          Geschiedenis van eerdere bezoeken
+        </h2>
+
+        <p class="text-xs text-eft-cream/55">
+          Kies een datum om alle meetpunten van die dag terug te bekijken.
+        </p>
+
       </div>
+
+      <span
+        id="historyCount"
+        class="text-xs text-eft-cream/50"
+      ></span>
+
     </div>
-    <div id="overviewDayChecks" class="day-checks mb-4"></div>
-    <div class="overview-chart-wrap"><canvas id="overviewChart"></canvas></div>
-    <p id="overviewEmpty" class="hidden text-sm text-eft-cream/50 text-center py-6">Selecteer minimaal één bezoekdag met geregistreerde momenten.</p>
-  </section>
+
+
+    <div
+      id="historyList"
+      class="space-y-3"
+    ></div>
+
+
+    <p
+      id="historyEmpty"
+      class="hidden text-sm text-eft-cream/50 text-center py-6"
+    >
+      Er zijn nog geen eerdere bezoeken opgeslagen.
+    </p>
 
   </section>
+
+</div>
+
+
+
+<!-- =========================================================
+     DAGWEERGAVE
+========================================================= -->
+
+<div id="dashboardView" class="space-y-5">
+
+
+<!-- =========================================================
+     KAART
+========================================================= -->
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-4 shadow-xl">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+
+    <div>
+
+      <h2 class="font-display text-xl text-eft-gold">
+        Plattegrond
+      </h2>
+
+      <p class="text-xs text-eft-cream/55">
+        Leaflet-kaart met attracties, eten, shows, souvenirs en rijken.
+      </p>
+
+    </div>
+
+
+    <div class="flex flex-wrap gap-2">
+
+      <button
+        id="locateBtn"
+        class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition"
+      >
+        📍 Mijn locatie
+      </button>
+
+
+      <button
+        id="musicBtn"
+        class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
+      >
+        🔊 Muziek aan
+      </button>
+
+
+      <a
+        id="sunoLink"
+        href="https://suno.com/song/0d769865-fc65-4294-b673-ec42d2c9cbca?sh=6JGMz8S4RnPbp0bZ"
+        target="_blank"
+        rel="noopener"
+        class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
+      >
+        🎵 Open Ouderbatterij
+      </a>
+
+    </div>
+
   </div>
+
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+
+    <label class="text-xs text-eft-cream/70">
+
+      Categorie
+
+      <select
+        id="mapCategory"
+        class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
+      >
+
+        <option value="alle">Alles</option>
+        <option value="attractie">🎢 Attracties</option>
+        <option value="restaurant">🍴 Restaurants</option>
+        <option value="show">🎭 Parkshows</option>
+        <option value="souvenir">🛍️ Souvenirs</option>
+        <option value="rijk">🏰 Rijken</option>
+
+      </select>
+
+    </label>
+
+
+    <label class="text-xs text-eft-cream/70">
+
+      Rijk
+
+      <select
+        id="mapRealm"
+        class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
+      >
+
+        <option value="alle">Alle rijken</option>
+        <option>Marerijk</option>
+        <option>Reizenrijk</option>
+        <option>Ruigrijk</option>
+        <option>Anderrijk</option>
+        <option>Fantasierijk</option>
+
+      </select>
+
+    </label>
+
+  </div>
+
+
+  <div id="map"></div>
+
+
+  <p
+    id="locStatus"
+    class="text-xs text-eft-cream/60 mt-2"
+  ></p>
+
+
+  <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+
+    <span
+      id="musicStatus"
+      class="text-eft-cream/50"
+    >
+      🎵 Ouderbatterij staat klaar als achtergrondmuziek.
+      Klik op “Muziek aan” om te starten.
+    </span>
+
+  </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     REGISTREREN
+========================================================= -->
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+
+  <div class="flex flex-wrap items-start justify-between gap-2">
+
+    <div>
+
+      <h2 class="font-display text-xl text-eft-gold">
+        Bezoek registreren
+      </h2>
+
+      <p
+        id="selectedDayLabel"
+        class="text-xs text-eft-cream/55 mt-1"
+      ></p>
+
+    </div>
+
+
+    <a
+      href="https://www.efteling.com/nl/park/plattegrond"
+      target="_blank"
+      rel="noopener"
+      class="text-xs text-eft-gold underline"
+    >
+      Actuele Efteling-informatie ↗
+    </a>
+
+  </div>
+
+
+  <div class="grid sm:grid-cols-2 gap-4 mt-4">
+
+
+    <div>
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        Categorie
+      </label>
+
+      <select
+        id="categorySelect"
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      >
+
+        <option value="attractie">🎢 Attractie</option>
+        <option value="restaurant">🍴 Restaurant</option>
+        <option value="show">🎭 Parkshow</option>
+        <option value="souvenir">🛍️ Souvenirwinkel</option>
+        <option value="overig">✍️ Overig</option>
+
+      </select>
+
+    </div>
+
+
+    <div>
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        Rijk
+      </label>
+
+      <select
+        id="realmSelect"
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      >
+
+        <option value="">
+          Onbekend / niet van toepassing
+        </option>
+
+        <option>Marerijk</option>
+        <option>Reizenrijk</option>
+        <option>Ruigrijk</option>
+        <option>Anderrijk</option>
+        <option>Fantasierijk</option>
+
+      </select>
+
+    </div>
+
+
+    <div class="sm:col-span-2">
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        Wat heb je gedaan?
+      </label>
+
+      <select
+        id="placeSelect"
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      ></select>
+
+
+      <input
+        id="customPlace"
+        type="text"
+        placeholder="Vrije tekst, bijvoorbeeld: ijsje bij de vijver"
+        class="hidden mt-2 w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      >
+
+    </div>
+
+
+    <div>
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+
+        Datum & tijd
+
+        <span class="text-xs text-eft-cream/50">
+          (automatisch ingevuld, aanpasbaar)
+        </span>
+
+      </label>
+
+
+      <input
+        id="dateTimeInput"
+        type="datetime-local"
+        required
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      >
+
+    </div>
+
+
+    <div>
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+
+        Score:
+
+        <span
+          id="scoreValue"
+          class="text-eft-gold font-bold text-lg"
+        >
+          50
+        </span>
+
+        / 100
+
+      </label>
+
+
+      <input
+        id="scoreSlider"
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="w-full mt-2"
+      >
+
+
+      <div class="flex justify-between text-xs text-eft-cream/50 mt-1">
+
+        <span>😵 Leeg</span>
+        <span>🙂 Prima</span>
+        <span>🔋 Volle batterij</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <button
+    id="saveBtn"
+    class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition"
+  >
+    💾 Bezoek opslaan
+  </button>
+
+
+  <span
+    id="savedMsg"
+    class="ml-3 text-sm text-eft-gold2 hidden"
+  >
+    Opgeslagen!
+  </span>
+
+</section>
+
+
+
+<!-- =========================================================
+     DAGOVERZICHT
+========================================================= -->
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+
+    <div>
+
+      <h2
+        id="historyTitle"
+        class="font-display text-xl text-eft-gold"
+      >
+        Vandaag
+      </h2>
+
+      <p
+        id="daySummary"
+        class="text-xs text-eft-cream/55"
+      ></p>
+
+    </div>
+
+
+    <button
+      id="clearDayBtn"
+      class="text-xs text-eft-cream/50 hover:text-red-300 underline"
+    >
+      Deze dag wissen
+    </button>
+
+  </div>
+
+
+  <div class="overflow-x-auto">
+
+    <table class="w-full text-sm">
+
+      <thead>
+
+        <tr class="text-eft-gold/80 border-b border-eft-gold/30">
+
+          <th class="text-left py-2 pr-2">
+            Categorie
+          </th>
+
+          <th class="text-left py-2 pr-2">
+            Moment
+          </th>
+
+          <th class="text-left py-2 pr-2">
+            Tijdstip
+          </th>
+
+          <th class="text-left py-2 pr-2">
+            Score
+          </th>
+
+          <th></th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody id="historyBody"></tbody>
+
+    </table>
+
+
+    <p
+      id="emptyMsg"
+      class="text-eft-cream/50 text-sm py-4 text-center"
+    >
+      Nog geen bezoeken op deze dag.
+    </p>
+
+  </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     SCOREVERLOOP VAN ÉÉN DAG
+========================================================= -->
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+
+    <div>
+
+      <h2 class="font-display text-xl text-eft-gold">
+        Scoreverloop
+      </h2>
+
+      <p class="text-xs text-eft-cream/55">
+        Tijd op de x-as, score op de y-as.
+        De naam van de attractie of activiteit staat naast ieder meetpunt.
+      </p>
+
+    </div>
+
+
+    <button
+      id="downloadChartBtn"
+      class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
+    >
+      ⬇️ Plot downloaden
+    </button>
+
+  </div>
+
+
+  <div
+    id="scoreChartEmpty"
+    class="chart-empty hidden"
+  >
+    Nog geen meetpunten op deze dag.
+  </div>
+
+
+  <div
+    id="scoreChartContainer"
+    class="chart-wrap"
+  >
+
+    <canvas id="scoreChart"></canvas>
+
+  </div>
+
+</section>
+
+</div>
+
+
+
+<!-- =========================================================
+     MEERDERE DAGEN
+========================================================= -->
+
+<div id="multiView" class="hidden space-y-5">
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+
+    <div>
+
+      <h2 class="font-display text-xl text-eft-gold">
+        Overzicht meerdere dagen
+      </h2>
+
+      <p class="text-xs text-eft-cream/55">
+        De x-as gebruikt de volledige datum én tijd.
+        Daardoor staan meerdere dagen op één echte tijdlijn.
+      </p>
+
+    </div>
+
+
+    <div class="flex flex-wrap gap-2">
+
+      <button
+        id="selectAllDaysBtn"
+        class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+      >
+        Alles
+      </button>
+
+
+      <button
+        id="selectNoDaysBtn"
+        class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+      >
+        Geen
+      </button>
+
+
+      <button
+        id="downloadOverviewChartBtn"
+        class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+      >
+        ⬇️ Download
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="overviewDayChecks"
+    class="day-checks mb-4"
+  ></div>
+
+
+  <div
+    id="overviewChartEmpty"
+    class="chart-empty hidden"
+  >
+    Selecteer minimaal één bezoekdag met meetpunten.
+  </div>
+
+
+  <div
+    id="overviewChartContainer"
+    class="overview-chart-wrap"
+  >
+
+    <canvas id="overviewChart"></canvas>
+
+  </div>
+
+</section>
+
+</div>
+
 </main>
 
+
+
 <footer class="max-w-6xl mx-auto px-4 pt-8 text-center text-xs text-eft-cream/50">
+
   Deze tool is gebouwd met AI2 (Anika & Artificiële intelligentie)
+
 </footer>
 
-<audio id="backgroundMusic" src="Ouderbatterij.mp3" loop preload="auto"></audio>
+
+
+<audio
+  id="backgroundMusic"
+  src="Ouderbatterij.mp3"
+  loop
+  preload="auto"
+></audio>
+
+
 
 <script>
-// Actuele namen zijn gebaseerd op de door Efteling gepubliceerde overzichten; kaartposities zijn praktische, benaderde Leaflet-posities.
-const POIS=[
-{name:"Danse Macabre",type:"attractie",realm:"Ruigrijk",lat:51.64791,lng:5.05088},
-{name:"Baron 1898",type:"attractie",realm:"Ruigrijk",lat:51.64876,lng:5.04594},
-{name:"Hooghmoed",type:"attractie",realm:"Ruigrijk",lat:51.64845,lng:5.04655},
-{name:"Joris en de Draak",type:"attractie",realm:"Ruigrijk",lat:51.65065,lng:5.04716},
-{name:"De Vliegende Hollander",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04540},
-{name:"Python",type:"attractie",realm:"Ruigrijk",lat:51.65114,lng:5.05068},
-{name:"Piraña",type:"attractie",realm:"Ruigrijk",lat:51.64650,lng:5.04800},
-{name:"Halve Maen",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04500},
-{name:"De Oude Tufferbaan",type:"attractie",realm:"Ruigrijk",lat:51.64700,lng:5.04550},
-{name:"Stoomcarrousel",type:"attractie",realm:"Marerijk",lat:51.64950,lng:5.04650},
-{name:"Villa Volta",type:"attractie",realm:"Marerijk",lat:51.64850,lng:5.05050},
-{name:"Droomvlucht",type:"attractie",realm:"Marerijk",lat:51.64988,lng:5.04982},
-{name:"Sprookjesbos",type:"attractie",realm:"Marerijk",lat:51.64900,lng:5.04550},
-{name:"Het Volk van Laaf",type:"attractie",realm:"Marerijk",lat:51.64890,lng:5.04730},
-{name:"Anton Pieckplein",type:"attractie",realm:"Marerijk",lat:51.64935,lng:5.04700},
-{name:"Kleuterhof",type:"attractie",realm:"Marerijk",lat:51.64870,lng:5.04780},
-{name:"Kindervreugd",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04820},
-{name:"Kinderspoor",type:"attractie",realm:"Marerijk",lat:51.64920,lng:5.04880},
-{name:"Symbolica",type:"attractie",realm:"Fantasierijk",lat:51.65038,lng:5.04996},
-{name:"Pagode",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05180},
-{name:"Gondoletta",type:"attractie",realm:"Fantasierijk",lat:51.65000,lng:5.04700},
-{name:"The Six Swans",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05000},
-{name:"Monorail",type:"attractie",realm:"Fantasierijk",lat:51.65100,lng:5.04900},
-{name:"Fabula",type:"attractie",realm:"Anderrijk",lat:51.64980,lng:5.05080},
-{name:"Fata Morgana",type:"attractie",realm:"Anderrijk",lat:51.64930,lng:5.04920},
-{name:"Vogel Rok",type:"attractie",realm:"Reizenrijk",lat:51.65200,lng:5.05180},
-{name:"Sirocco",type:"attractie",realm:"Reizenrijk",lat:51.65220,lng:5.05230},
-{name:"Archipel",type:"attractie",realm:"Reizenrijk",lat:51.65250,lng:5.05300},
-{name:"Carnaval Festival",type:"attractie",realm:"Reizenrijk",lat:51.65230,lng:5.05080},
-{name:"Nest!",type:"attractie",realm:"Reizenrijk",lat:51.65170,lng:5.05100},
-{name:"Stoomtrein",type:"attractie",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
-{name:"Efteling Museum",type:"attractie",realm:"Marerijk",lat:51.64960,lng:5.04690},
-{name:"Diorama",type:"attractie",realm:"Marerijk",lat:51.64970,lng:5.04730},
-{name:"Holle Bolle Gijs",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04620},
-{name:"Game Gallery",type:"attractie",realm:"Marerijk",lat:51.64880,lng:5.04690},
-{name:"Raveleijn",type:"attractie",realm:"Marerijk",lat:51.64670,lng:5.04680},
 
-{name:"Polles Keuken",type:"restaurant",realm:"Fantasierijk",lat:51.65000,lng:5.05000},
-{name:"Pinokkio's pizza & pasta restaurant",type:"restaurant",realm:"Marerijk",lat:51.64780,lng:5.04350},
-{name:"In den Swarte Kat",type:"restaurant",realm:"Marerijk",lat:51.64850,lng:5.04980},
-{name:"'t Koetshuys",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04770},
-{name:"Restaurant Kashba",type:"restaurant",realm:"Reizenrijk",lat:51.65030,lng:5.05200},
-{name:"Bäckerei Krümel",type:"restaurant",realm:"Marerijk",lat:51.64700,lng:5.04620},
-{name:"Brasserie 7",type:"restaurant",realm:"Marerijk",lat:51.65020,lng:5.04580},
-{name:"Restaurant Mystique",type:"restaurant",realm:"Marerijk",lat:51.65010,lng:5.04590},
-{name:"Restaurant Saga",type:"restaurant",realm:"Marerijk",lat:51.65000,lng:5.04600},
-{name:"'t Verwende Nest!",type:"restaurant",realm:"Reizenrijk",lat:51.65120,lng:5.04750},
-{name:"Frau Boltes Küche",type:"restaurant",realm:"Reizenrijk",lat:51.65200,lng:5.05000},
-{name:"Fabula Wereldkeuken",type:"restaurant",realm:"Anderrijk",lat:51.64990,lng:5.05090},
-{name:"In de Gelaarsde Kat",type:"restaurant",realm:"Marerijk",lat:51.64880,lng:5.04530},
-{name:"Het Witte Paard",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04680},
-{name:"Kleyne Klaroen",type:"restaurant",realm:"Marerijk",lat:51.64870,lng:5.04520},
-{name:"'t Melkhuysje",type:"restaurant",realm:"Marerijk",lat:51.64840,lng:5.04620},
-{name:"'t Poffertje",type:"restaurant",realm:"Marerijk",lat:51.64950,lng:5.04750},
-{name:"Toko Pagode",type:"restaurant",realm:"Fantasierijk",lat:51.65280,lng:5.05180},
-{name:"Station de Oost",type:"restaurant",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
+/* =========================================================
+   DATA
+========================================================= */
 
-{name:"Magicaluna",type:"show",realm:"Reizenrijk",lat:51.65180,lng:5.05200},
-{name:"Aquanura",type:"show",realm:"Ruigrijk",lat:51.64800,lng:5.04750},
-{name:"Ontmoet & begroet Efteling-bewoners",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04700},
-{name:"Ontmoet & begroet Pardoes de Tovernar",type:"show",realm:"Fantasierijk",lat:51.65040,lng:5.05020},
-{name:"Sprookjesboomshow",type:"show",realm:"Marerijk",lat:51.64920,lng:5.04580},
-{name:"Jokie en Jet",type:"show",realm:"Reizenrijk",lat:51.65200,lng:5.05060},
-{name:"Dr. Charlatans Cabaret Macabre",type:"show",realm:"Ruigrijk",lat:51.64780,lng:5.05050},
-{name:"De Huyveraars",type:"show",realm:"Ruigrijk",lat:51.64810,lng:5.05080},
-{name:"Sprookjessprokkelaar",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04600},
-{name:"Bakker Krümel en Frau Schmetterling",type:"show",realm:"Marerijk",lat:51.64710,lng:5.04620},
+const POIS = [
 
-{name:"Efteldingen",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04600},
-{name:"Arcadeau",type:"souvenir",realm:"Marerijk",lat:51.65010,lng:5.04570},
-{name:"In den Ouden Marskramer",type:"souvenir",realm:"Marerijk",lat:51.64910,lng:5.04630},
-{name:"Jokies Wereld",type:"souvenir",realm:"Reizenrijk",lat:51.65200,lng:5.05020},
-{name:"Cascada",type:"souvenir",realm:"Ruigrijk",lat:51.64670,lng:5.04780},
-{name:"Spiegeltje, Spiegeltje...",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04700},
-{name:"Dr. Charlatans Kwalycke Zaken",type:"souvenir",realm:"Ruigrijk",lat:51.64790,lng:5.05060},
-{name:"Symbolica",type:"souvenir",realm:"Fantasierijk",lat:51.65040,lng:5.05010},
-{name:"'t Boeghbeeld",type:"souvenir",realm:"Ruigrijk",lat:51.64780,lng:5.04520},
-{name:"De Bazaar",type:"souvenir",realm:"Anderrijk",lat:51.64940,lng:5.04900},
-{name:"Dromerijen",type:"souvenir",realm:"Marerijk",lat:51.64990,lng:5.04970},
-{name:"Fabula",type:"souvenir",realm:"Anderrijk",lat:51.64990,lng:5.05080},
-{name:"De Gevoelighe Plaet",type:"souvenir",realm:"Ruigrijk",lat:51.64870,lng:5.04600}
+  {name:"Danse Macabre",type:"attractie",realm:"Ruigrijk",lat:51.64791,lng:5.05088},
+  {name:"Baron 1898",type:"attractie",realm:"Ruigrijk",lat:51.64876,lng:5.04594},
+  {name:"Hooghmoed",type:"attractie",realm:"Ruigrijk",lat:51.64845,lng:5.04655},
+  {name:"Joris en de Draak",type:"attractie",realm:"Ruigrijk",lat:51.65065,lng:5.04716},
+  {name:"De Vliegende Hollander",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04540},
+  {name:"Python",type:"attractie",realm:"Ruigrijk",lat:51.65114,lng:5.05068},
+  {name:"Piraña",type:"attractie",realm:"Ruigrijk",lat:51.64650,lng:5.04800},
+  {name:"Halve Maen",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04500},
+  {name:"De Oude Tufferbaan",type:"attractie",realm:"Ruigrijk",lat:51.64700,lng:5.04550},
+
+  {name:"Stoomcarrousel",type:"attractie",realm:"Marerijk",lat:51.64950,lng:5.04650},
+  {name:"Villa Volta",type:"attractie",realm:"Marerijk",lat:51.64850,lng:5.05050},
+  {name:"Droomvlucht",type:"attractie",realm:"Marerijk",lat:51.64988,lng:5.04982},
+  {name:"Sprookjesbos",type:"attractie",realm:"Marerijk",lat:51.64900,lng:5.04550},
+  {name:"Het Volk van Laaf",type:"attractie",realm:"Marerijk",lat:51.64890,lng:5.04730},
+  {name:"Anton Pieckplein",type:"attractie",realm:"Marerijk",lat:51.64935,lng:5.04700},
+  {name:"Kleuterhof",type:"attractie",realm:"Marerijk",lat:51.64870,lng:5.04780},
+  {name:"Kindervreugd",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04820},
+  {name:"Kinderspoor",type:"attractie",realm:"Marerijk",lat:51.64920,lng:5.04880},
+  {name:"Efteling Museum",type:"attractie",realm:"Marerijk",lat:51.64960,lng:5.04690},
+  {name:"Diorama",type:"attractie",realm:"Marerijk",lat:51.64970,lng:5.04730},
+  {name:"Holle Bolle Gijs",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04620},
+  {name:"Game Gallery",type:"attractie",realm:"Marerijk",lat:51.64880,lng:5.04690},
+  {name:"Raveleijn",type:"attractie",realm:"Marerijk",lat:51.64670,lng:5.04680},
+
+  {name:"Symbolica",type:"attractie",realm:"Fantasierijk",lat:51.65038,lng:5.04996},
+  {name:"Pagode",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05180},
+  {name:"Gondoletta",type:"attractie",realm:"Fantasierijk",lat:51.65000,lng:5.04700},
+  {name:"The Six Swans",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05000},
+  {name:"Monorail",type:"attractie",realm:"Fantasierijk",lat:51.65100,lng:5.04900},
+
+  {name:"Fabula",type:"attractie",realm:"Anderrijk",lat:51.64980,lng:5.05080},
+  {name:"Fata Morgana",type:"attractie",realm:"Anderrijk",lat:51.64930,lng:5.04920},
+
+  {name:"Vogel Rok",type:"attractie",realm:"Reizenrijk",lat:51.65200,lng:5.05180},
+  {name:"Sirocco",type:"attractie",realm:"Reizenrijk",lat:51.65220,lng:5.05230},
+  {name:"Archipel",type:"attractie",realm:"Reizenrijk",lat:51.65250,lng:5.05300},
+  {name:"Carnaval Festival",type:"attractie",realm:"Reizenrijk",lat:51.65230,lng:5.05080},
+  {name:"Nest!",type:"attractie",realm:"Reizenrijk",lat:51.65170,lng:5.05100},
+  {name:"Stoomtrein",type:"attractie",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
+
+  {name:"Polles Keuken",type:"restaurant",realm:"Fantasierijk",lat:51.65000,lng:5.05000},
+  {name:"Pinokkio's pizza & pasta restaurant",type:"restaurant",realm:"Marerijk",lat:51.64780,lng:5.04350},
+  {name:"In den Swarte Kat",type:"restaurant",realm:"Marerijk",lat:51.64850,lng:5.04980},
+  {name:"'t Koetshuys",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04770},
+  {name:"Restaurant Kashba",type:"restaurant",realm:"Reizenrijk",lat:51.65030,lng:5.05200},
+  {name:"Bäckerei Krümel",type:"restaurant",realm:"Marerijk",lat:51.64700,lng:5.04620},
+  {name:"Brasserie 7",type:"restaurant",realm:"Marerijk",lat:51.65020,lng:5.04580},
+  {name:"Restaurant Mystique",type:"restaurant",realm:"Marerijk",lat:51.65010,lng:5.04590},
+  {name:"Restaurant Saga",type:"restaurant",realm:"Marerijk",lat:51.65000,lng:5.04600},
+  {name:"'t Verwende Nest!",type:"restaurant",realm:"Reizenrijk",lat:51.65120,lng:5.04750},
+  {name:"Frau Boltes Küche",type:"restaurant",realm:"Reizenrijk",lat:51.65200,lng:5.05000},
+  {name:"Fabula Wereldkeuken",type:"restaurant",realm:"Anderrijk",lat:51.64990,lng:5.05090},
+  {name:"In de Gelaarsde Kat",type:"restaurant",realm:"Marerijk",lat:51.64880,lng:5.04530},
+  {name:"Het Witte Paard",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04680},
+  {name:"Kleyne Klaroen",type:"restaurant",realm:"Marerijk",lat:51.64870,lng:5.04520},
+  {name:"'t Melkhuysje",type:"restaurant",realm:"Marerijk",lat:51.64840,lng:5.04620},
+  {name:"'t Poffertje",type:"restaurant",realm:"Marerijk",lat:51.64950,lng:5.04750},
+  {name:"Toko Pagode",type:"restaurant",realm:"Fantasierijk",lat:51.65280,lng:5.05180},
+  {name:"Station de Oost",type:"restaurant",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
+
+  {name:"Magicaluna",type:"show",realm:"Reizenrijk",lat:51.65180,lng:5.05200},
+  {name:"Aquanura",type:"show",realm:"Ruigrijk",lat:51.64800,lng:5.04750},
+  {name:"Ontmoet & begroet Efteling-bewoners",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04700},
+  {name:"Ontmoet & begroet Pardoes de Tovernar",type:"show",realm:"Fantasierijk",lat:51.65040,lng:5.05020},
+  {name:"Sprookjesboomshow",type:"show",realm:"Marerijk",lat:51.64920,lng:5.04580},
+  {name:"Jokie en Jet",type:"show",realm:"Reizenrijk",lat:51.65200,lng:5.05060},
+  {name:"Dr. Charlatans Cabaret Macabre",type:"show",realm:"Ruigrijk",lat:51.64780,lng:5.05050},
+  {name:"De Huyveraars",type:"show",realm:"Ruigrijk",lat:51.64810,lng:5.05080},
+  {name:"Sprookjessprokkelaar",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04600},
+  {name:"Bakker Krümel en Frau Schmetterling",type:"show",realm:"Marerijk",lat:51.64710,lng:5.04620},
+
+  {name:"Efteldingen",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04600},
+  {name:"Arcadeau",type:"souvenir",realm:"Marerijk",lat:51.65010,lng:5.04570},
+  {name:"In den Ouden Marskramer",type:"souvenir",realm:"Marerijk",lat:51.64910,lng:5.04630},
+  {name:"Jokies Wereld",type:"souvenir",realm:"Reizenrijk",lat:51.65200,lng:5.05020},
+  {name:"Cascada",type:"souvenir",realm:"Ruigrijk",lat:51.64670,lng:5.04780},
+  {name:"Spiegeltje, Spiegeltje...",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04700},
+  {name:"Dr. Charlatans Kwalycke Zaken",type:"souvenir",realm:"Ruigrijk",lat:51.64790,lng:5.05060},
+  {name:"Symbolica",type:"souvenir",realm:"Fantasierijk",lat:51.65040,lng:5.05010},
+  {name:"'t Boeghbeeld",type:"souvenir",realm:"Ruigrijk",lat:51.64780,lng:5.04520},
+  {name:"De Bazaar",type:"souvenir",realm:"Anderrijk",lat:51.64940,lng:5.04900},
+  {name:"Dromerijen",type:"souvenir",realm:"Marerijk",lat:51.64990,lng:5.04970},
+  {name:"Fabula",type:"souvenir",realm:"Anderrijk",lat:51.64990,lng:5.05080},
+  {name:"De Gevoelighe Plaet",type:"souvenir",realm:"Ruigrijk",lat:51.64870,lng:5.04600}
+
 ];
 
-const REALMS=[
-{name:"Marerijk",lat:51.64905,lng:5.04705},
-{name:"Reizenrijk",lat:51.65200,lng:5.05170},
-{name:"Ruigrijk",lat:51.64780,lng:5.04700},
-{name:"Anderrijk",lat:51.64955,lng:5.04980},
-{name:"Fantasierijk",lat:51.65055,lng:5.05035}
-];
-const TYPE_LABEL={attractie:"🎢 Attractie",restaurant:"🍴 Restaurant",show:"🎭 Parkshow",souvenir:"🛍️ Souvenir",overig:"✍️ Overig"};
-const STORAGE_KEY="ouderbatterij_v3";
-const musicEmbed=document.getElementById('musicEmbed');
-const map=L.map('map').setView([51.6495,5.0485],16);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
 
-function iconFor(type){
- const bg={attractie:'#d4af37',restaurant:'#e2725b',show:'#7c83fd',souvenir:'#d06adf',rijk:'#55a36f'}[type]||'#d4af37';
- const shape=type==='restaurant'?'border-radius:4px':type==='show'?'border-radius:50%':type==='souvenir'?'border-radius:2px;transform:rotate(45deg)':'border-radius:50%';
- return L.divIcon({html:`<div style="background:${bg};width:15px;height:15px;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,.5);${shape}"></div>`,className:'',iconSize:[15,15],iconAnchor:[7,7]});
-}
-// Achtergrondmuziek: het meegeleverde MP3-bestand wordt lokaal gebruikt.
-const backgroundMusic=document.getElementById('backgroundMusic');
-const musicBtn=document.getElementById('musicBtn');
-const musicStatus=document.getElementById('musicStatus');
-let musicOn=false;
-async function playMusic(){
-  try{
-    await backgroundMusic.play();
-    musicOn=true;
-    musicBtn.textContent='🔇 Muziek uit';
-    musicStatus.textContent='🎵 Ouderbatterij speelt nu op de achtergrond.';
-  }catch(err){
-    musicStatus.textContent='⚠️ De muziek kon niet starten. Controleer of Ouderbatterij.mp3 naast index.html staat.';
+const REALMS = [
+  {name:"Marerijk",lat:51.64905,lng:5.04705},
+  {name:"Reizenrijk",lat:51.65200,lng:5.05170},
+  {name:"Ruigrijk",lat:51.64780,lng:5.04700},
+  {name:"Anderrijk",lat:51.64955,lng:5.04980},
+  {name:"Fantasierijk",lat:51.65055,lng:5.05035}
+];
+
+
+const TYPE_LABEL = {
+  attractie:"🎢 Attractie",
+  restaurant:"🍴 Restaurant",
+  show:"🎭 Parkshow",
+  souvenir:"🛍️ Souvenir",
+  overig:"✍️ Overig"
+};
+
+
+const STORAGE_KEY = "ouderbatterij_v3";
+
+
+/* =========================================================
+   KAART
+========================================================= */
+
+const map = L.map('map')
+  .setView([51.6495,5.0485],16);
+
+
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    attribution:'&copy; OpenStreetMap contributors',
+    maxZoom:19
   }
-}
-function pauseMusic(){
-  backgroundMusic.pause();
-  musicOn=false;
-  musicBtn.textContent='🔊 Muziek aan';
-  musicStatus.textContent='🎵 Muziek staat uit.';
-}
-musicBtn.addEventListener('click',()=>musicOn?pauseMusic():playMusic());
+).addTo(map);
 
-const markers=[];
-const poiMarkers={};
-function popupFor(p){return `<b>${TYPE_LABEL[p.type]||''} ${p.name}</b><br><span style="opacity:.75">${p.realm||''}</span>`}
-POIS.forEach(p=>{
- const m=L.marker([p.lat,p.lng],{icon:iconFor(p.type)}).addTo(map).bindPopup(popupFor(p));
- m.on('click',()=>selectPlaceFromMap(p));
- markers.push({obj:m,data:p}); poiMarkers[p.name]=m;
-});
-REALMS.forEach(r=>{
- const m=L.marker([r.lat,r.lng],{icon:iconFor('rijk')}).addTo(map).bindPopup(`<b>🏰 ${r.name}</b><br><span style="opacity:.75">Rijk</span>`);
- markers.push({obj:m,data:{...r,type:'rijk'}});
-});
-function selectPlaceFromMap(p){
- categorySelect.value=p.type; realmSelect.value=p.realm||''; populatePlaces(); placeSelect.value=p.name; customPlace.classList.add('hidden');
- locStatus.textContent=`🖱️ "${p.name}" geselecteerd via de kaart.`;
-}
-function filterMap(){
- const c=mapCategory.value,r=mapRealm.value;
- markers.forEach(x=>{
-   const show=(c==='alle'||x.data.type===c)&&(r==='alle'||x.data.realm===r);
-   if(show&&!map.hasLayer(x.obj))x.obj.addTo(map);
-   if(!show&&map.hasLayer(x.obj))map.removeLayer(x.obj);
- });
-}
-mapCategory.onchange=filterMap;mapRealm.onchange=filterMap;
 
-const categorySelect=document.getElementById('categorySelect');
-const realmSelect=document.getElementById('realmSelect');
-const placeSelect=document.getElementById('placeSelect');
-const customPlace=document.getElementById('customPlace');
-function populatePlaces(){
- const type=categorySelect.value;
- placeSelect.innerHTML='';
- const list=POIS.filter(p=>p.type===type).sort((a,b)=>a.name.localeCompare(b.name,'nl'));
- list.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;placeSelect.appendChild(o)});
- const free=document.createElement('option');free.value='__custom__';free.textContent='✍️ Vrije tekst...';placeSelect.appendChild(free);
- customPlace.classList.toggle('hidden',placeSelect.value!=='__custom__');
+function iconFor(type) {
+
+  const bg = {
+    attractie:'#d4af37',
+    restaurant:'#e2725b',
+    show:'#7c83fd',
+    souvenir:'#d06adf',
+    rijk:'#55a36f'
+  }[type] || '#d4af37';
+
+
+  const shape =
+    type === 'restaurant'
+      ? 'border-radius:4px'
+      : type === 'show'
+        ? 'border-radius:50%'
+        : type === 'souvenir'
+          ? 'border-radius:2px;transform:rotate(45deg)'
+          : 'border-radius:50%';
+
+
+  return L.divIcon({
+
+    html:`
+      <div style="
+        background:${bg};
+        width:15px;
+        height:15px;
+        border:2px solid #123524;
+        box-shadow:0 0 4px rgba(0,0,0,.5);
+        ${shape}
+      "></div>
+    `,
+
+    className:'',
+    iconSize:[15,15],
+    iconAnchor:[7,7]
+
+  });
+
 }
-categorySelect.addEventListener('change',populatePlaces);
-placeSelect.addEventListener('change',()=>customPlace.classList.toggle('hidden',placeSelect.value!=='__custom__'));
+
+
+const markers = [];
+
+
+function popupFor(p) {
+
+  return `
+    <b>${TYPE_LABEL[p.type] || '🏰'} ${p.name}</b>
+    <br>
+    <span style="opacity:.75">
+      ${p.realm || ''}
+    </span>
+  `;
+
+}
+
+
+POIS.forEach(p => {
+
+  const marker =
+    L.marker(
+      [p.lat,p.lng],
+      {
+        icon:iconFor(p.type)
+      }
+    )
+    .addTo(map)
+    .bindPopup(
+      popupFor(p)
+    );
+
+
+  marker.on(
+    'click',
+    () => selectPlaceFromMap(p)
+  );
+
+
+  markers.push({
+    obj:marker,
+    data:p
+  });
+
+});
+
+
+REALMS.forEach(r => {
+
+  const marker =
+    L.marker(
+      [r.lat,r.lng],
+      {
+        icon:iconFor('rijk')
+      }
+    )
+    .addTo(map)
+    .bindPopup(
+      `<b>🏰 ${r.name}</b><br>
+       <span style="opacity:.75">Rijk</span>`
+    );
+
+
+  markers.push({
+    obj:marker,
+    data:{
+      ...r,
+      type:'rijk'
+    }
+  });
+
+});
+
+
+function filterMap() {
+
+  const category =
+    document.getElementById(
+      'mapCategory'
+    ).value;
+
+
+  const realm =
+    document.getElementById(
+      'mapRealm'
+    ).value;
+
+
+  markers.forEach(item => {
+
+    const visible =
+      (category === 'alle' ||
+       item.data.type === category) &&
+
+      (realm === 'alle' ||
+       item.data.realm === realm);
+
+
+    if (
+      visible &&
+      !map.hasLayer(item.obj)
+    ) {
+      item.obj.addTo(map);
+    }
+
+
+    if (
+      !visible &&
+      map.hasLayer(item.obj)
+    ) {
+      map.removeLayer(item.obj);
+    }
+
+  });
+
+}
+
+
+document
+  .getElementById('mapCategory')
+  .addEventListener(
+    'change',
+    filterMap
+  );
+
+
+document
+  .getElementById('mapRealm')
+  .addEventListener(
+    'change',
+    filterMap
+  );
+
+
+/* =========================================================
+   FORMULIER
+========================================================= */
+
+const categorySelect =
+  document.getElementById(
+    'categorySelect'
+  );
+
+
+const realmSelect =
+  document.getElementById(
+    'realmSelect'
+  );
+
+
+const placeSelect =
+  document.getElementById(
+    'placeSelect'
+  );
+
+
+const customPlace =
+  document.getElementById(
+    'customPlace'
+  );
+
+
+function populatePlaces() {
+
+  const type =
+    categorySelect.value;
+
+
+  placeSelect.innerHTML = '';
+
+
+  const list =
+    POIS
+      .filter(
+        p => p.type === type
+      )
+      .sort(
+        (a,b) =>
+          a.name.localeCompare(
+            b.name,
+            'nl'
+          )
+      );
+
+
+  list.forEach(p => {
+
+    const option =
+      document.createElement(
+        'option'
+      );
+
+
+    option.value =
+      p.name;
+
+
+    option.textContent =
+      p.name;
+
+
+    placeSelect.appendChild(
+      option
+    );
+
+  });
+
+
+  const free =
+    document.createElement(
+      'option'
+    );
+
+
+  free.value =
+    '__custom__';
+
+
+  free.textContent =
+    '✍️ Vrije tekst...';
+
+
+  placeSelect.appendChild(
+    free
+  );
+
+
+  customPlace.classList.toggle(
+    'hidden',
+    placeSelect.value !== '__custom__'
+  );
+
+}
+
+
+categorySelect.addEventListener(
+  'change',
+  populatePlaces
+);
+
+
+placeSelect.addEventListener(
+  'change',
+  () => {
+
+    customPlace.classList.toggle(
+      'hidden',
+      placeSelect.value !== '__custom__'
+    );
+
+  }
+);
+
+
 populatePlaces();
 
-function todayKey(){
- const d=new Date();
- return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+
+function selectPlaceFromMap(p) {
+
+  categorySelect.value =
+    p.type;
+
+
+  realmSelect.value =
+    p.realm || '';
+
+
+  populatePlaces();
+
+
+  placeSelect.value =
+    p.name;
+
+
+  customPlace.classList.add(
+    'hidden'
+  );
+
+
+  document.getElementById(
+    'locStatus'
+  ).textContent =
+    `🖱️ "${p.name}" geselecteerd via de kaart.`;
+
 }
-function fmtDate(key){
- return new Date(key+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+
+
+/* =========================================================
+   DATUM EN TIJD
+========================================================= */
+
+function todayKey() {
+
+  const d =
+    new Date();
+
+
+  return [
+    d.getFullYear(),
+    String(
+      d.getMonth()+1
+    ).padStart(2,'0'),
+    String(
+      d.getDate()
+    ).padStart(2,'0')
+  ].join('-');
+
 }
-function nowLocalISO(){
- const d=new Date();
- const pad=n=>String(n).padStart(2,'0');
- return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+
+function fmtDate(key) {
+
+  return new Date(
+    key + 'T12:00:00'
+  ).toLocaleDateString(
+    'nl-NL',
+    {
+      weekday:'short',
+      day:'2-digit',
+      month:'2-digit',
+      year:'numeric'
+    }
+  );
+
 }
-function refreshDateTimeInput(){
- const el=document.getElementById('dateTimeInput');
- if(el) el.value=nowLocalISO();
+
+
+function nowLocalISO() {
+
+  const d =
+    new Date();
+
+
+  const pad =
+    n => String(n).padStart(2,'0');
+
+
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
 }
+
+
+function refreshDateTimeInput() {
+
+  const input =
+    document.getElementById(
+      'dateTimeInput'
+    );
+
+
+  if (input) {
+    input.value =
+      nowLocalISO();
+  }
+
+}
+
+
 refreshDateTimeInput();
 
-let state=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{days:[todayKey()],visits:[],active:todayKey(),overviewDays:[]};
-const today=todayKey();
-if(!Array.isArray(state.days)) state.days=[];
-if(!state.days.includes(today)) state.days.unshift(today);
-if(!Array.isArray(state.overviewDays)) state.overviewDays=[];
-state.overviewDays=state.overviewDays.filter(d=>state.days.includes(d));
-if(!state.overviewDays.length) state.overviewDays=[today];
-state.active=today;
-let currentView='today';
 
-function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
-function dayVisits(day){return state.visits.filter(v=>v.day===day).sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))}
+/* =========================================================
+   STATE
+========================================================= */
 
-function updateViewButtons(){
- const buttons=[
-   ['viewTodayBtn','today'],
-   ['viewHistoryBtn','history'],
-   ['viewMultiBtn','multi']
- ];
- buttons.forEach(([id,view])=>{
-   const b=document.getElementById(id);
-   if(!b) return;
-   b.classList.toggle('tab-active',currentView===view);
-   b.classList.toggle('bg-eft-green2',currentView!==view);
- });
-}
-
-function setView(view){
- currentView=view;
- document.getElementById('dashboardView').classList.toggle('hidden',view!=='today');
- document.getElementById('historyView').classList.toggle('hidden',view!=='history');
- document.getElementById('multiView').classList.toggle('hidden',view!=='multi');
- updateViewButtons();
- if(view==='history') renderHistory();
- if(view==='multi'){
-   renderOverviewDayChecks();
-   renderOverviewChart();
- }
- window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function renderHistory(){
- const days=sortedDays().filter(d=>d!==todayKey());
- const list=document.getElementById('historyList');
- const empty=document.getElementById('historyEmpty');
- const count=document.getElementById('historyCount');
- list.innerHTML='';
- count.textContent=`${days.length} eerder bezoek${days.length===1?'':'en'}`;
- empty.classList.toggle('hidden',days.length>0);
-
- days.forEach(day=>{
-   const visits=dayVisits(day);
-   const card=document.createElement('div');
-   card.className='bg-eft-green2/70 rounded-xl p-4 gold-border';
-   const avg=visits.length?Math.round(visits.reduce((a,v)=>a+Number(v.score||0),0)/visits.length):null;
-   const times=visits.map(v=>new Date(v.dateTime).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}));
-   const range=times.length?`${times[0]}${times.length>1?' – '+times[times.length-1]:''}`:'—';
-
-   let rows=visits.map(v=>{
-     const d=new Date(v.dateTime);
-     return `<tr class="border-t border-eft-gold/10"><td class="py-2 pr-2 whitespace-nowrap">${d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</td><td class="py-2 pr-2">${TYPE_LABEL[v.type]||'✍️ Overig'}</td><td class="py-2 pr-2">${escapeHtml(v.place)}</td><td class="py-2 text-right font-bold text-eft-gold">${v.score}/100</td></tr>`;
-   }).join('');
-
-   card.innerHTML=`
-     <div class="flex flex-wrap items-center justify-between gap-3">
-       <div>
-         <h3 class="font-display text-lg text-eft-gold">${fmtDate(day)}</h3>
-         <p class="text-xs text-eft-cream/55">${visits.length} meetpunt${visits.length===1?'':'en'} · ${range} · gemiddelde ${avg===null?'—':avg+'/100'}</p>
-       </div>
-       <button class="view-history-day bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg text-sm" data-day="${day}">Bekijk deze dag</button>
-     </div>
-     <div class="overflow-x-auto mt-3">
-       ${visits.length
-         ? `<table class="w-full text-sm"><thead><tr class="text-eft-gold/70"><th class="text-left pb-1 pr-2">Tijd</th><th class="text-left pb-1 pr-2">Categorie</th><th class="text-left pb-1 pr-2">Meetpunt</th><th class="text-right pb-1">Score</th></tr></thead><tbody>${rows}</tbody></table>`
-         : `<p class="text-sm text-eft-cream/50 py-2">Geen meetpunten op deze dag.</p>`}
-     </div>`;
-   list.appendChild(card);
- });
-
- list.querySelectorAll('.view-history-day').forEach(btn=>btn.addEventListener('click',()=>{
-   state.active=btn.dataset.day;
-   saveState();
-   renderAll();
-   setView('today');
- }));
-}
-function sortedDays(){return [...new Set(state.days)].sort((a,b)=>b.localeCompare(a));}
-
-function renderDay(){
- const day=state.active;
- const visits=dayVisits(day);
- document.getElementById('historyTitle').textContent=day===todayKey()?'Vandaag':fmtDate(day);
- document.getElementById('selectedDayLabel').textContent='Actieve bezoekdag: '+(day===todayKey()?'Vandaag':fmtDate(day));
- document.getElementById('daySummary').textContent=visits.length?`${visits.length} geregistreerde momenten · gemiddelde score ${Math.round(visits.reduce((a,v)=>a+Number(v.score||0),0)/visits.length)}/100`:'Nog geen momenten geregistreerd';
- const body=document.getElementById('historyBody'); body.innerHTML='';
- document.getElementById('emptyMsg').classList.toggle('hidden',visits.length>0);
- visits.forEach(v=>{
-   const tr=document.createElement('tr'); tr.className='border-b border-eft-gold/10';
-   const d=new Date(v.dateTime);
-   tr.innerHTML=`<td class="py-2 pr-2">${TYPE_LABEL[v.type]||'✍️ Overig'}</td><td class="py-2 pr-2">${escapeHtml(v.place)}</td><td class="py-2 pr-2 whitespace-nowrap">${d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</td><td class="py-2 pr-2 font-bold text-eft-gold">${v.score}/100</td><td class="py-2 text-right"><button class="text-xs text-red-300 underline" data-delete="${v.id}">wissen</button></td>`;
-   body.appendChild(tr);
- });
- body.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>{state.visits=state.visits.filter(v=>v.id!==btn.dataset.delete);renderAll();});
-}
-function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));}
-function formatMinutes(minutes){
-  const m=Math.max(0,Math.min(1439,Math.round(Number(minutes)||0)));
-  const h=Math.floor(m/60).toString().padStart(2,'0');
-  const min=(m%60).toString().padStart(2,'0');
-  return `${h}:${min}`;
-}
-function dateTimeToMinutes(dateTime){
-  const d=new Date(dateTime);
-  return d.getHours()*60+d.getMinutes();
-}
-
-let scoreChart=null;
-let overviewChart=null;
-function chartOptions(){
-  return {
-    responsive:true,
-    maintainAspectRatio:false,
-    animation:false,
-    scales:{
-      y:{min:0,max:100,ticks:{color:'#f7f3e8',stepSize:25},grid:{color:'rgba(247,243,232,.10)'},border:{color:'rgba(247,243,232,.15)'}},
-      x:{ticks:{color:'#f7f3e8',maxTicksLimit:6},grid:{color:'rgba(247,243,232,.07)'},border:{color:'rgba(247,243,232,.15)'}}
-    },
-    plugins:{legend:{labels:{color:'#f7f3e8',boxWidth:12,usePointStyle:true}},tooltip:{mode:'nearest',intersect:false}}
+let state =
+  JSON.parse(
+    localStorage.getItem(
+      STORAGE_KEY
+    ) || 'null'
+  )
+  ||
+  {
+    days:[todayKey()],
+    visits:[],
+    active:todayKey(),
+    overviewDays:[todayKey()]
   };
+
+
+const today =
+  todayKey();
+
+
+if (!Array.isArray(state.days)) {
+  state.days = [];
 }
-function renderChart(){
-  const ctx=document.getElementById('scoreChart');
-  if(scoreChart) scoreChart.destroy();
-  const visits=dayVisits(state.active);
-  scoreChart=new Chart(ctx,{
-    type:'line',
-    data:{labels:visits.map(v=>new Date(v.dateTime).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})),datasets:[{label:'Batterijscore',data:visits.map(v=>Number(v.score)),tension:.25,fill:false,pointRadius:3,pointHoverRadius:5,borderWidth:2}]},
-    options:chartOptions()
+
+
+if (!state.days.includes(today)) {
+  state.days.unshift(today);
+}
+
+
+if (!Array.isArray(state.visits)) {
+  state.visits = [];
+}
+
+
+if (!Array.isArray(state.overviewDays)) {
+  state.overviewDays = [];
+}
+
+
+state.overviewDays =
+  state.overviewDays.filter(
+    day => state.days.includes(day)
+  );
+
+
+if (!state.overviewDays.length) {
+  state.overviewDays = [today];
+}
+
+
+/*
+ * We zetten de actieve dag alleen op vandaag
+ * bij het opstarten.
+ *
+ * Zodra vanuit Geschiedenis een andere dag
+ * wordt gekozen, blijft die dag actief.
+ */
+
+state.active =
+  today;
+
+
+let currentView =
+  'today';
+
+
+function saveState() {
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(state)
+  );
+
+}
+
+
+function dayVisits(day) {
+
+  return state.visits
+    .filter(
+      v => v.day === day
+    )
+    .sort(
+      (a,b) =>
+        new Date(a.dateTime) -
+        new Date(b.dateTime)
+    );
+
+}
+
+
+function sortedDays() {
+
+  return [
+    ...new Set(state.days)
+  ].sort(
+    (a,b) =>
+      b.localeCompare(a)
+  );
+
+}
+
+
+/* =========================================================
+   NAVIGATIE
+========================================================= */
+
+function updateViewButtons() {
+
+  [
+    ['viewTodayBtn','today'],
+    ['viewHistoryBtn','history'],
+    ['viewMultiBtn','multi']
+  ]
+  .forEach(
+    ([id,view]) => {
+
+      const button =
+        document.getElementById(id);
+
+
+      button.classList.toggle(
+        'tab-active',
+        currentView === view
+      );
+
+
+      button.classList.toggle(
+        'bg-eft-green2',
+        currentView !== view
+      );
+
+    }
+  );
+
+}
+
+
+function setView(view) {
+
+  currentView =
+    view;
+
+
+  document
+    .getElementById('dashboardView')
+    .classList.toggle(
+      'hidden',
+      view !== 'today'
+    );
+
+
+  document
+    .getElementById('historyView')
+    .classList.toggle(
+      'hidden',
+      view !== 'history'
+    );
+
+
+  document
+    .getElementById('multiView')
+    .classList.toggle(
+      'hidden',
+      view !== 'multi'
+    );
+
+
+  updateViewButtons();
+
+
+  /*
+   * BELANGRIJK:
+   * Wanneer de Vandaag-tab geopend wordt,
+   * wordt de grafiek opnieuw opgebouwd.
+   */
+
+  if (view === 'today') {
+    renderChart();
+  }
+
+
+  if (view === 'history') {
+    renderHistory();
+  }
+
+
+  if (view === 'multi') {
+
+    renderOverviewDayChecks();
+
+    renderOverviewChart();
+
+  }
+
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
   });
+
 }
-function sortedDays(){return [...new Set(state.days)].sort((a,b)=>b.localeCompare(a));}
-function renderOverviewDayChecks(){
-  const wrap=document.getElementById('overviewDayChecks');
-  wrap.innerHTML='';
-  sortedDays().forEach(day=>{
-    const label=document.createElement('label');
-    label.className='day-check text-xs';
-    const input=document.createElement('input');
-    input.type='checkbox';
-    input.value=day;
-    input.checked=state.overviewDays.includes(day);
-    input.addEventListener('change',()=>{
-      const selected=[...wrap.querySelectorAll('input:checked')].map(x=>x.value);
-      state.overviewDays=selected;
-      saveState();
-      renderOverviewChart();
+
+
+/* =========================================================
+   GESCHIEDENIS
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ''
+  )
+  .replace(
+    /[&<>'"]/g,
+    c => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      "'":'&#39;',
+      '"':'&quot;'
+    }[c])
+  );
+
+}
+
+
+function renderHistory() {
+
+  const days =
+    sortedDays()
+      .filter(
+        day => day !== todayKey()
+      );
+
+
+  const list =
+    document.getElementById(
+      'historyList'
+    );
+
+
+  const empty =
+    document.getElementById(
+      'historyEmpty'
+    );
+
+
+  const count =
+    document.getElementById(
+      'historyCount'
+    );
+
+
+  list.innerHTML = '';
+
+
+  count.textContent =
+    `${days.length} eerder bezoek${days.length === 1 ? '' : 'en'}`;
+
+
+  empty.classList.toggle(
+    'hidden',
+    days.length > 0
+  );
+
+
+  days.forEach(day => {
+
+    const visits =
+      dayVisits(day);
+
+
+    const card =
+      document.createElement(
+        'div'
+      );
+
+
+    card.className =
+      'bg-eft-green2/70 rounded-xl p-4 gold-border';
+
+
+    const average =
+      visits.length
+
+        ?
+
+        Math.round(
+          visits.reduce(
+            (sum,v) =>
+              sum + Number(v.score || 0),
+            0
+          ) / visits.length
+        )
+
+        :
+
+        null;
+
+
+    const rows =
+      visits.map(v => {
+
+        const d =
+          new Date(v.dateTime);
+
+
+        return `
+          <tr class="border-t border-eft-gold/10">
+
+            <td class="py-2 pr-2 whitespace-nowrap">
+              ${d.toLocaleTimeString(
+                'nl-NL',
+                {
+                  hour:'2-digit',
+                  minute:'2-digit'
+                }
+              )}
+            </td>
+
+            <td class="py-2 pr-2">
+              ${TYPE_LABEL[v.type] || '✍️ Overig'}
+            </td>
+
+            <td class="py-2 pr-2">
+              ${escapeHtml(v.place)}
+            </td>
+
+            <td class="py-2 text-right font-bold text-eft-gold">
+              ${v.score}/100
+            </td>
+
+          </tr>
+        `;
+
+      }).join('');
+
+
+    card.innerHTML = `
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
+
+        <div>
+
+          <h3 class="font-display text-lg text-eft-gold">
+            ${fmtDate(day)}
+          </h3>
+
+          <p class="text-xs text-eft-cream/55">
+            ${visits.length}
+            meetpunt${visits.length === 1 ? '' : 'en'}
+            · gemiddelde
+            ${average === null ? '—' : average + '/100'}
+          </p>
+
+        </div>
+
+
+        <button
+          class="view-history-day bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg text-sm"
+          data-day="${day}"
+        >
+          Bekijk deze dag
+        </button>
+
+      </div>
+
+
+      <div class="overflow-x-auto mt-3">
+
+        ${
+          visits.length
+
+            ?
+
+            `
+            <table class="w-full text-sm">
+
+              <thead>
+
+                <tr class="text-eft-gold/70">
+
+                  <th class="text-left pb-1 pr-2">
+                    Tijd
+                  </th>
+
+                  <th class="text-left pb-1 pr-2">
+                    Categorie
+                  </th>
+
+                  <th class="text-left pb-1 pr-2">
+                    Meetpunt
+                  </th>
+
+                  <th class="text-right pb-1">
+                    Score
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+                ${rows}
+              </tbody>
+
+            </table>
+            `
+
+            :
+
+            `
+            <p class="text-sm text-eft-cream/50 py-2">
+              Geen meetpunten op deze dag.
+            </p>
+            `
+        }
+
+      </div>
+    `;
+
+
+    list.appendChild(card);
+
+  });
+
+
+  list
+    .querySelectorAll(
+      '.view-history-day'
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          state.active =
+            button.dataset.day;
+
+
+          saveState();
+
+
+          renderAll();
+
+
+          setView('today');
+
+        }
+      );
+
     });
-    const span=document.createElement('span');
-    span.textContent=day===todayKey()?'Vandaag':fmtDate(day);
-    label.append(input,span);
-    wrap.appendChild(label);
+
+}
+
+
+/* =========================================================
+   DAGOVERZICHT
+========================================================= */
+
+function renderDay() {
+
+  const day =
+    state.active;
+
+
+  const visits =
+    dayVisits(day);
+
+
+  document.getElementById(
+    'historyTitle'
+  ).textContent =
+    day === todayKey()
+      ? 'Vandaag'
+      : fmtDate(day);
+
+
+  document.getElementById(
+    'selectedDayLabel'
+  ).textContent =
+    'Actieve bezoekdag: ' +
+    (
+      day === todayKey()
+        ? 'Vandaag'
+        : fmtDate(day)
+    );
+
+
+  document.getElementById(
+    'daySummary'
+  ).textContent =
+    visits.length
+
+      ?
+
+      `${visits.length} geregistreerde momenten · gemiddelde score ${
+        Math.round(
+          visits.reduce(
+            (sum,v) =>
+              sum + Number(v.score || 0),
+            0
+          ) / visits.length
+        )
+      }/100`
+
+      :
+
+      'Nog geen momenten geregistreerd';
+
+
+  const body =
+    document.getElementById(
+      'historyBody'
+    );
+
+
+  body.innerHTML = '';
+
+
+  document.getElementById(
+    'emptyMsg'
+  ).classList.toggle(
+    'hidden',
+    visits.length > 0
+  );
+
+
+  visits.forEach(v => {
+
+    const tr =
+      document.createElement(
+        'tr'
+      );
+
+
+    tr.className =
+      'border-b border-eft-gold/10';
+
+
+    const d =
+      new Date(v.dateTime);
+
+
+    tr.innerHTML = `
+
+      <td class="py-2 pr-2">
+        ${TYPE_LABEL[v.type] || '✍️ Overig'}
+      </td>
+
+      <td class="py-2 pr-2">
+        ${escapeHtml(v.place)}
+      </td>
+
+      <td class="py-2 pr-2 whitespace-nowrap">
+        ${d.toLocaleTimeString(
+          'nl-NL',
+          {
+            hour:'2-digit',
+            minute:'2-digit'
+          }
+        )}
+      </td>
+
+      <td class="py-2 pr-2 font-bold text-eft-gold">
+        ${v.score}/100
+      </td>
+
+      <td class="py-2 text-right">
+
+        <button
+          class="text-xs text-red-300 underline"
+          data-delete="${v.id}"
+        >
+          wissen
+        </button>
+
+      </td>
+
+    `;
+
+
+    body.appendChild(tr);
+
   });
-}
-function renderOverviewChart(){
-  const canvas=document.getElementById('overviewChart');
-  const empty=document.getElementById('overviewEmpty');
-  if(overviewChart) overviewChart.destroy();
-  const selected=state.overviewDays.filter(d=>state.days.includes(d));
-  const datasets=selected.map((day,i)=>({
-    label:day===todayKey()?'Vandaag':fmtDate(day),
-    data:dayVisits(day).map(v=>({x:dateTimeToMinutes(v.dateTime),y:Number(v.score)})),
-    showLine:true,
-    tension:.25,
-    pointRadius:3,
-    pointHoverRadius:5,
-    borderWidth:2,
-    spanGaps:true
-  })).filter(ds=>ds.data.length);
-  empty.classList.toggle('hidden',datasets.length>0);
-  canvas.parentElement.classList.toggle('hidden',datasets.length===0);
-  if(!datasets.length) return;
-  const opts=chartOptions();
-  opts.scales.x={min:0,max:1439,ticks:{color:'#f7f3e8',maxTicksLimit:8,callback:value=>formatMinutes(value)},grid:{color:'rgba(247,243,232,.07)'},border:{color:'rgba(247,243,232,.15)'}};
-  opts.plugins.tooltip={mode:'nearest',intersect:false,callbacks:{title(items){if(!items.length)return '';return `${items[0].dataset.label} · ${formatMinutes(items[0].parsed.x)}`;}}};
-  overviewChart=new Chart(canvas,{type:'line',data:{datasets},options:opts});
-}
-function downloadChart(){
- if(!scoreChart) return;
- const a=document.createElement('a'); a.href=scoreChart.toBase64Image('image/png',1); a.download=`ouderbatterij-${state.active}-scoreverloop.png`; a.click();
-}
-function downloadOverviewChart(){
- if(!overviewChart) return;
- const a=document.createElement('a'); a.href=overviewChart.toBase64Image('image/png',1); a.download='ouderbatterij-meerdagen-overzicht.png'; a.click();
-}
-document.getElementById('downloadChartBtn').addEventListener('click',downloadChart);
-document.getElementById('downloadOverviewChartBtn').addEventListener('click',downloadOverviewChart);
-document.getElementById('viewTodayBtn').addEventListener('click',()=>{
- state.active=todayKey();
- saveState();
- renderAll();
- setView('today');
-});
-document.getElementById('viewHistoryBtn').addEventListener('click',()=>setView('history'));
-document.getElementById('viewMultiBtn').addEventListener('click',()=>setView('multi'));
 
-document.getElementById('selectAllDaysBtn').addEventListener('click',()=>{state.overviewDays=sortedDays();saveState();renderOverviewDayChecks();renderOverviewChart();});
-document.getElementById('selectNoDaysBtn').addEventListener('click',()=>{state.overviewDays=[];saveState();renderOverviewDayChecks();renderOverviewChart();});
-document.getElementById('scoreSlider').addEventListener('input',e=>document.getElementById('scoreValue').textContent=e.target.value);
-document.getElementById('saveBtn').addEventListener('click',()=>{
- const type=document.getElementById('categorySelect').value; const select=document.getElementById('placeSelect');
- const place=select.value==='__custom__'?document.getElementById('customPlace').value.trim():select.value;
- if(!place){alert('Kies of vul eerst in wat je hebt gedaan.');return;}
- const dateTimeInput=document.getElementById('dateTimeInput');
- const dateTime=dateTimeInput.value || nowLocalISO();
- if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateTime)){alert('Vul een geldige datum en tijd in.');return;}
- const chosenDate=new Date(dateTime);
- if(Number.isNaN(chosenDate.getTime())){alert('Vul een geldige datum en tijd in.');return;}
- const day=dateTime.slice(0,10); if(!state.days.includes(day)) state.days.unshift(day);
- state.visits.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),day,dateTime,type,realm:document.getElementById('realmSelect').value,place,score:Number(document.getElementById('scoreSlider').value)});
- state.active=day; saveState(); document.getElementById('savedMsg').classList.remove('hidden'); setTimeout(()=>document.getElementById('savedMsg').classList.add('hidden'),1400);
- refreshDateTimeInput();
- renderAll();
-});
-document.getElementById('clearDayBtn').addEventListener('click',()=>{
- const day=state.active; if(!confirm(`Alle geregistreerde momenten van ${day===todayKey()?'vandaag':fmtDate(day)} wissen?`)) return;
- state.visits=state.visits.filter(v=>v.day!==day);
- if(day!==todayKey()) state.days=state.days.filter(d=>d!==day);
- state.active=todayKey(); if(!state.days.includes(state.active)) state.days.unshift(state.active); renderAll();
-});
-document.getElementById('locateBtn').addEventListener('click',()=>{
- if(!navigator.geolocation){document.getElementById('locStatus').textContent='📍 Locatie wordt niet ondersteund door deze browser.';return;}
- document.getElementById('locStatus').textContent='📍 Locatie wordt opgehaald…';
- navigator.geolocation.getCurrentPosition(pos=>{const ll=[pos.coords.latitude,pos.coords.longitude];L.marker(ll).addTo(map).bindPopup('📍 Jij bent hier').openPopup();map.setView(ll,17);document.getElementById('locStatus').textContent='📍 Jouw locatie is op de kaart gezet.';},()=>document.getElementById('locStatus').textContent='⚠️ Locatie kon niet worden opgehaald.');
-});
 
-function renderAll(){renderDay();renderHistory();renderOverviewDayChecks();renderOverviewChart();updateViewButtons();saveState()}
+  body
+    .querySelectorAll(
+      '[data-delete]'
+    )
+    .forEach(button => {
+
+      button.onclick =
+        () => {
+
+          state.visits =
+            state.visits.filter(
+              v =>
+                v.id !==
+                button.dataset.delete
+            );
+
+
+          renderAll();
+
+        };
+
+    });
+
+}
+
+
+/* =========================================================
+   CHART HELPERS
+========================================================= */
+
+function formatTodayTime(timestamp) {
+
+  return new Date(
+    Number(timestamp)
+  ).toLocaleTimeString(
+    'nl-NL',
+    {
+      hour:'2-digit',
+      minute:'2-digit'
+    }
+  );
+
+}
+
+
+function formatMultiDateTime(timestamp) {
+
+  return new Date(
+    Number(timestamp)
+  ).toLocaleString(
+    'nl-NL',
+    {
+      day:'2-digit',
+      month:'2-digit',
+      hour:'2-digit',
+      minute:'2-digit'
+    }
+  );
+
+}
+
+
+function formatFullDateTime(timestamp) {
+
+  return new Date(
+    Number(timestamp)
+  ).toLocaleString(
+    'nl-NL',
+    {
+      weekday:'short',
+      day:'2-digit',
+      month:'2-digit',
+      year:'numeric',
+      hour:'2-digit',
+      minute:'2-digit'
+    }
+  );
+
+}
+
+
+/* =========================================================
+   ATTRACTIENAMEN OP DE PUNTEN
+========================================================= */
+
+const pointLabelsPlugin = {
+
+  id:'ouderbatterijPointLabels',
+
+
+  afterDatasetsDraw(chart) {
+
+    const ctx =
+      chart.ctx;
+
+
+    ctx.save();
+
+
+    chart.data.datasets.forEach(
+      (dataset,datasetIndex) => {
+
+        const meta =
+          chart.getDatasetMeta(
+            datasetIndex
+          );
+
+
+        meta.data.forEach(
+          (point,index) => {
+
+            const raw =
+              dataset.data[index];
+
+
+            if (
+              !raw ||
+              !raw.place
+            ) {
+              return;
+            }
+
+
+            let label =
+              String(raw.place);
+
+
+            /*
+             * Lange namen worden ingekort.
+             * De volledige naam staat altijd in de tooltip.
+             */
+
+            if (label.length > 30) {
+
+              label =
+                label.substring(
+                  0,
+                  27
+                ) + '…';
+
+            }
+
+
+            ctx.font =
+              '600 11px Arial, sans-serif';
+
+
+            const textWidth =
+              ctx.measureText(
+                label
+              ).width;
+
+
+            const padding =
+              4;
+
+
+            const boxWidth =
+              textWidth +
+              padding * 2;
+
+
+            const boxHeight =
+              18;
+
+
+            /*
+             * Standaard rechtsboven van het punt.
+             */
+
+            let x =
+              point.x + 8;
+
+
+            let y =
+              point.y - 9;
+
+
+            let align =
+              'left';
+
+
+            /*
+             * Als het label rechts buiten de grafiek
+             * zou vallen, plaatsen we het links.
+             */
+
+            if (
+              x + textWidth >
+              chart.chartArea.right
+            ) {
+
+              x =
+                point.x -
+                8;
+
+              align =
+                'right';
+
+            }
+
+
+            /*
+             * Als het label boven de grafiek komt,
+             * zetten we het onder het punt.
+             */
+
+            if (
+              y - boxHeight / 2 <
+              chart.chartArea.top
+            ) {
+
+              y =
+                point.y + 13;
+
+            }
+
+
+            const boxX =
+              align === 'right'
+                ? x - boxWidth + padding
+                : x - padding;
+
+
+            const boxY =
+              y -
+              boxHeight / 2;
+
+
+            ctx.fillStyle =
+              'rgba(18,53,36,.90)';
+
+
+            ctx.fillRect(
+              boxX,
+              boxY,
+              boxWidth,
+              boxHeight
+            );
+
+
+            ctx.fillStyle =
+              '#f7f3e8';
+
+
+            ctx.textAlign =
+              align;
+
+
+            ctx.textBaseline =
+              'middle';
+
+
+            ctx.fillText(
+              label,
+              x,
+              y
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+    ctx.restore();
+
+  }
+
+};
+
+
+Chart.register(
+  pointLabelsPlugin
+);
+
+
+/* =========================================================
+   CHART BASISOPTIES
+========================================================= */
+
+function baseChartOptions() {
+
+  return {
+
+    responsive:true,
+
+    maintainAspectRatio:false,
+
+    animation:false,
+
+    scales: {
+
+      y: {
+
+        min:0,
+
+        max:100,
+
+        ticks: {
+
+          color:'#f7f3e8',
+
+          stepSize:25
+
+        },
+
+        grid: {
+
+          color:
+            'rgba(247,243,232,.10)'
+
+        },
+
+        border: {
+
+          color:
+            'rgba(247,243,232,.15)'
+
+        },
+
+        title: {
+
+          display:true,
+
+          text:'Score',
+
+          color:'#f7f3e8'
+
+        }
+
+      },
+
+
+      x: {
+
+        type:'linear',
+
+        ticks: {
+
+          color:'#f7f3e8'
+
+        },
+
+        grid: {
+
+          color:
+            'rgba(247,243,232,.07)'
+
+        },
+
+        border: {
+
+          color:
+            'rgba(247,243,232,.15)'
+
+        }
+
+      }
+
+    },
+
+
+    plugins: {
+
+      legend: {
+
+        labels: {
+
+          color:'#f7f3e8',
+
+          boxWidth:12,
+
+          usePointStyle:true
+
+        }
+
+      },
+
+
+      tooltip: {
+
+        mode:'nearest',
+
+        intersect:false
+
+      }
+
+    }
+
+  };
+
+}
+
+
+/* =========================================================
+   SCOREVERLOOP VAN VANDAAG / ACTIEVE DAG
+========================================================= */
+
+let scoreChart =
+  null;
+
+
+function renderChart() {
+
+  const canvas =
+    document.getElementById(
+      'scoreChart'
+    );
+
+
+  const container =
+    document.getElementById(
+      'scoreChartContainer'
+    );
+
+
+  const empty =
+    document.getElementById(
+      'scoreChartEmpty'
+    );
+
+
+  /*
+   * Oude chart altijd eerst vernietigen.
+   */
+
+  if (scoreChart) {
+
+    scoreChart.destroy();
+
+    scoreChart =
+      null;
+
+  }
+
+
+  const visits =
+    dayVisits(
+      state.active
+    );
+
+
+  /*
+   * Geen meetpunten:
+   * duidelijke melding tonen.
+   */
+
+  if (!visits.length) {
+
+    container.classList.add(
+      'hidden'
+    );
+
+    empty.classList.remove(
+      'hidden'
+    );
+
+    return;
+
+  }
+
+
+  container.classList.remove(
+    'hidden'
+  );
+
+
+  empty.classList.add(
+    'hidden'
+  );
+
+
+  /*
+   * BELANGRIJK:
+   *
+   * We gebruiken hier een echte timestamp
+   * als x-waarde.
+   *
+   * Dus niet:
+   *
+   *     10:00 = 600
+   *
+   * maar:
+   *
+   *     24-09-2026 10:00 = echte datum/tijd
+   *
+   * Voor één dag geeft dit een echte tijd-as.
+   */
+
+  const data =
+    visits.map(
+      visit => ({
+
+        x:
+          new Date(
+            visit.dateTime
+          ).getTime(),
+
+        y:
+          Number(
+            visit.score
+          ),
+
+        place:
+          visit.place,
+
+        type:
+          visit.type,
+
+        dateTime:
+          visit.dateTime
+
+      })
+    );
+
+
+  const options =
+    baseChartOptions();
+
+
+  options.scales.x = {
+
+    type:'linear',
+
+    ticks: {
+
+      color:'#f7f3e8',
+
+      maxTicksLimit:8,
+
+      callback:
+        value =>
+          formatTodayTime(value)
+
+    },
+
+    grid: {
+
+      color:
+        'rgba(247,243,232,.07)'
+
+    },
+
+    border: {
+
+      color:
+        'rgba(247,243,232,.15)'
+
+    },
+
+    title: {
+
+      display:true,
+
+      text:'Tijd',
+
+      color:'#f7f3e8'
+
+    }
+
+  };
+
+
+  options.plugins.tooltip = {
+
+    mode:'nearest',
+
+    intersect:false,
+
+
+    callbacks: {
+
+      title(items) {
+
+        if (!items.length) {
+          return '';
+        }
+
+
+        return formatFullDateTime(
+          items[0].raw.x
+        );
+
+      },
+
+
+      label(context) {
+
+        const raw =
+          context.raw;
+
+
+        return [
+          `${raw.place}`,
+          `Score: ${raw.y}/100`
+        ];
+
+      }
+
+    }
+
+  };
+
+
+  scoreChart =
+    new Chart(
+      canvas,
+      {
+
+        type:'line',
+
+        data: {
+
+          datasets: [
+
+            {
+
+              label:
+                'Batterijscore',
+
+              data:data,
+
+              /*
+               * De punten zijn meetpunten.
+               * Geen kunstmatige lijn tussen verschillende
+               * meetmomenten.
+               */
+
+              showLine:true,
+              tension:0.2,
+
+              pointRadius:6,
+
+              pointHoverRadius:9,
+
+              borderWidth:2
+
+            }
+
+          ]
+
+        },
+
+        options:options
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   MEERDAGEN
+========================================================= */
+
+let overviewChart =
+  null;
+
+
+function renderOverviewDayChecks() {
+
+  const wrap =
+    document.getElementById(
+      'overviewDayChecks'
+    );
+
+
+  wrap.innerHTML = '';
+
+
+  sortedDays()
+    .forEach(day => {
+
+      const label =
+        document.createElement(
+          'label'
+        );
+
+
+      label.className =
+        'day-check text-xs';
+
+
+      const input =
+        document.createElement(
+          'input'
+        );
+
+
+      input.type =
+        'checkbox';
+
+
+      input.value =
+        day;
+
+
+      input.checked =
+        state.overviewDays.includes(
+          day
+        );
+
+
+      input.addEventListener(
+        'change',
+        () => {
+
+          state.overviewDays =
+            [
+              ...wrap.querySelectorAll(
+                'input:checked'
+              )
+            ].map(
+              input =>
+                input.value
+            );
+
+
+          saveState();
+
+
+          renderOverviewChart();
+
+        }
+      );
+
+
+      const span =
+        document.createElement(
+          'span'
+        );
+
+
+      span.textContent =
+        day === todayKey()
+          ? 'Vandaag'
+          : fmtDate(day);
+
+
+      label.append(
+        input,
+        span
+      );
+
+
+      wrap.appendChild(
+        label
+      );
+
+    });
+
+}
+
+
+function renderOverviewChart() {
+
+  const canvas =
+    document.getElementById(
+      'overviewChart'
+    );
+
+
+  const container =
+    document.getElementById(
+      'overviewChartContainer'
+    );
+
+
+  const empty =
+    document.getElementById(
+      'overviewChartEmpty'
+    );
+
+
+  if (overviewChart) {
+
+    overviewChart.destroy();
+
+    overviewChart =
+      null;
+
+  }
+
+
+  const selectedDays =
+    state.overviewDays
+      .filter(
+        day =>
+          state.days.includes(day)
+      );
+
+
+  /*
+   * Elke dag is een dataset.
+   *
+   * MAAR de x-waarde is voor alle datasets
+   * dezelfde echte datum/tijd.
+   *
+   * Hierdoor kunnen dagen niet meer over elkaar
+   * heen vallen.
+   */
+
+  const datasets =
+    selectedDays
+      .map(day => {
+
+        const visits =
+          dayVisits(day);
+
+
+        return {
+
+          label:
+            day === todayKey()
+              ? 'Vandaag'
+              : fmtDate(day),
+
+
+          data:
+            visits.map(
+              visit => ({
+
+                x:
+                  new Date(
+                    visit.dateTime
+                  ).getTime(),
+
+                y:
+                  Number(
+                    visit.score
+                  ),
+
+                place:
+                  visit.place,
+
+                type:
+                  visit.type,
+
+                dateTime:
+                  visit.dateTime
+
+              })
+            ),
+
+
+          /*
+           * De meetpunten worden per dag verbonden.
+           * De punten zelf blijven herkenbaar.
+           */
+
+          showLine:true,
+
+          tension:.2,
+
+          pointRadius:6,
+
+          pointHoverRadius:9,
+
+          borderWidth:2,
+
+          spanGaps:false
+
+        };
+
+      })
+      .filter(
+        dataset =>
+          dataset.data.length > 0
+      );
+
+
+  if (!datasets.length) {
+
+    container.classList.add(
+      'hidden'
+    );
+
+    empty.classList.remove(
+      'hidden'
+    );
+
+    return;
+
+  }
+
+
+  container.classList.remove(
+    'hidden'
+  );
+
+
+  empty.classList.add(
+    'hidden'
+  );
+
+
+  /*
+   * Alle x-waarden bepalen.
+   */
+
+  const allX =
+    datasets.flatMap(
+      dataset =>
+        dataset.data.map(
+          point => point.x
+        )
+    );
+
+
+  const minX =
+    Math.min(...allX);
+
+
+  const maxX =
+    Math.max(...allX);
+
+
+  const options =
+    baseChartOptions();
+
+
+  options.scales.x = {
+
+    type:'linear',
+
+    min:minX,
+
+    max:maxX,
+
+    ticks: {
+
+      color:'#f7f3e8',
+
+      maxTicksLimit:10,
+
+      callback:
+        value =>
+          formatMultiDateTime(value)
+
+    },
+
+    grid: {
+
+      color:
+        'rgba(247,243,232,.07)'
+
+    },
+
+    border: {
+
+      color:
+        'rgba(247,243,232,.15)'
+
+    },
+
+    title: {
+
+      display:true,
+
+      text:'Datum en tijd',
+
+      color:'#f7f3e8'
+
+    }
+
+  };
+
+
+  options.plugins.tooltip = {
+
+    mode:'nearest',
+
+    intersect:false,
+
+
+    callbacks: {
+
+      title(items) {
+
+        if (!items.length) {
+          return '';
+        }
+
+
+        return formatFullDateTime(
+          items[0].raw.x
+        );
+
+      },
+
+
+      label(context) {
+
+        const raw =
+          context.raw;
+
+
+        return [
+          `${raw.place}`,
+          `Score: ${raw.y}/100`
+        ];
+
+      }
+
+    }
+
+  };
+
+
+  overviewChart =
+    new Chart(
+      canvas,
+      {
+
+        type:'line',
+
+        data: {
+          datasets
+        },
+
+        options
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   DOWNLOADS
+========================================================= */
+
+function downloadChart() {
+
+  if (!scoreChart) {
+    return;
+  }
+
+
+  const link =
+    document.createElement(
+      'a'
+    );
+
+
+  link.href =
+    scoreChart.toBase64Image(
+      'image/png',
+      1
+    );
+
+
+  link.download =
+    `ouderbatterij-${state.active}-scoreverloop.png`;
+
+
+  link.click();
+
+}
+
+
+function downloadOverviewChart() {
+
+  if (!overviewChart) {
+    return;
+  }
+
+
+  const link =
+    document.createElement(
+      'a'
+    );
+
+
+  link.href =
+    overviewChart.toBase64Image(
+      'image/png',
+      1
+    );
+
+
+  link.download =
+    'ouderbatterij-meerdagen-overzicht.png';
+
+
+  link.click();
+
+}
+
+
+document
+  .getElementById(
+    'downloadChartBtn'
+  )
+  .addEventListener(
+    'click',
+    downloadChart
+  );
+
+
+document
+  .getElementById(
+    'downloadOverviewChartBtn'
+  )
+  .addEventListener(
+    'click',
+    downloadOverviewChart
+  );
+
+
+/* =========================================================
+   NAVIGATIE BUTTONS
+========================================================= */
+
+document
+  .getElementById(
+    'viewTodayBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      /*
+       * De knop Vandaag betekent daadwerkelijk
+       * vandaag, niet de laatst bekeken historische dag.
+       */
+
+      state.active =
+        todayKey();
+
+
+      saveState();
+
+
+      renderAll();
+
+
+      setView(
+        'today'
+      );
+
+    }
+  );
+
+
+document
+  .getElementById(
+    'viewHistoryBtn'
+  )
+  .addEventListener(
+    'click',
+    () =>
+      setView('history')
+  );
+
+
+document
+  .getElementById(
+    'viewMultiBtn'
+  )
+  .addEventListener(
+    'click',
+    () =>
+      setView('multi')
+  );
+
+
+/* =========================================================
+   MEERDAGEN SELECTIE
+========================================================= */
+
+document
+  .getElementById(
+    'selectAllDaysBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      state.overviewDays =
+        sortedDays();
+
+
+      saveState();
+
+
+      renderOverviewDayChecks();
+
+
+      renderOverviewChart();
+
+    }
+  );
+
+
+document
+  .getElementById(
+    'selectNoDaysBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      state.overviewDays =
+        [];
+
+
+      saveState();
+
+
+      renderOverviewDayChecks();
+
+
+      renderOverviewChart();
+
+    }
+  );
+
+
+/* =========================================================
+   SCORE SLIDER
+========================================================= */
+
+document
+  .getElementById(
+    'scoreSlider'
+  )
+  .addEventListener(
+    'input',
+    event => {
+
+      document.getElementById(
+        'scoreValue'
+      ).textContent =
+        event.target.value;
+
+    }
+  );
+
+
+/* =========================================================
+   OPSLAAN
+========================================================= */
+
+document
+  .getElementById(
+    'saveBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      const type =
+        categorySelect.value;
+
+
+      const place =
+        placeSelect.value === '__custom__'
+
+          ?
+
+          customPlace.value.trim()
+
+          :
+
+          placeSelect.value;
+
+
+      if (!place) {
+
+        alert(
+          'Kies of vul eerst in wat je hebt gedaan.'
+        );
+
+        return;
+
+      }
+
+
+      const dateTimeInput =
+        document.getElementById(
+          'dateTimeInput'
+        );
+
+
+      const dateTime =
+        dateTimeInput.value ||
+        nowLocalISO();
+
+
+      if (
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
+          .test(dateTime)
+      ) {
+
+        alert(
+          'Vul een geldige datum en tijd in.'
+        );
+
+        return;
+
+      }
+
+
+      const chosenDate =
+        new Date(
+          dateTime
+        );
+
+
+      if (
+        Number.isNaN(
+          chosenDate.getTime()
+        )
+      ) {
+
+        alert(
+          'Vul een geldige datum en tijd in.'
+        );
+
+        return;
+
+      }
+
+
+      const day =
+        dateTime.slice(
+          0,
+          10
+        );
+
+
+      if (
+        !state.days.includes(day)
+      ) {
+
+        state.days.unshift(
+          day
+        );
+
+      }
+
+
+      const visit = {
+
+        id:
+          crypto.randomUUID
+            ? crypto.randomUUID()
+            : String(
+                Date.now()
+              ),
+
+        day:
+
+          day,
+
+        dateTime:
+
+          dateTime,
+
+        type:
+
+          type,
+
+        realm:
+
+          realmSelect.value,
+
+        place:
+
+          place,
+
+        score:
+
+          Number(
+            document.getElementById(
+              'scoreSlider'
+            ).value
+          )
+
+      };
+
+
+      state.visits.push(
+        visit
+      );
+
+
+      /*
+       * De zojuist opgeslagen dag wordt
+       * automatisch de actieve dag.
+       */
+
+      state.active =
+        day;
+
+
+      /*
+       * Nieuwe dag meteen meenemen
+       * in het meerdaagse overzicht.
+       */
+
+      if (
+        !state.overviewDays.includes(
+          day
+        )
+      ) {
+
+        state.overviewDays.push(
+          day
+        );
+
+      }
+
+
+      saveState();
+
+
+      document
+        .getElementById(
+          'savedMsg'
+        )
+        .classList.remove(
+          'hidden'
+        );
+
+
+      setTimeout(
+        () => {
+
+          document
+            .getElementById(
+              'savedMsg'
+            )
+            .classList.add(
+              'hidden'
+            );
+
+        },
+        1400
+      );
+
+
+      refreshDateTimeInput();
+
+
+      /*
+       * BELANGRIJK:
+       *
+       * renderAll() roept nu ook renderChart()
+       * aan. Hierdoor verschijnt het nieuwe
+       * meetpunt direct in Scoreverloop.
+       */
+
+      renderAll();
+
+    }
+  );
+
+
+/* =========================================================
+   DAG WISSEN
+========================================================= */
+
+document
+  .getElementById(
+    'clearDayBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      const day =
+        state.active;
+
+
+      if (
+        !confirm(
+          `Alle geregistreerde momenten van ${
+            day === todayKey()
+              ? 'vandaag'
+              : fmtDate(day)
+          } wissen?`
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      state.visits =
+        state.visits.filter(
+          visit =>
+            visit.day !== day
+        );
+
+
+      /*
+       * Historische dag verwijderen
+       * uit de lijst met dagen.
+       */
+
+      if (
+        day !== todayKey()
+      ) {
+
+        state.days =
+          state.days.filter(
+            d => d !== day
+          );
+
+
+        state.overviewDays =
+          state.overviewDays.filter(
+            d => d !== day
+          );
+
+      }
+
+
+      state.active =
+        todayKey();
+
+
+      if (
+        !state.days.includes(
+          state.active
+        )
+      ) {
+
+        state.days.unshift(
+          state.active
+        );
+
+      }
+
+
+      if (
+        !state.overviewDays.includes(
+          state.active
+        )
+      ) {
+
+        state.overviewDays.push(
+          state.active
+        );
+
+      }
+
+
+      renderAll();
+
+    }
+  );
+
+
+/* =========================================================
+   LOCATIE
+========================================================= */
+
+document
+  .getElementById(
+    'locateBtn'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      const status =
+        document.getElementById(
+          'locStatus'
+        );
+
+
+      if (
+        !navigator.geolocation
+      ) {
+
+        status.textContent =
+          '📍 Locatie wordt niet ondersteund door deze browser.';
+
+        return;
+
+      }
+
+
+      status.textContent =
+        '📍 Locatie wordt opgehaald…';
+
+
+      navigator.geolocation.getCurrentPosition(
+
+        position => {
+
+          const latLng = [
+
+            position.coords.latitude,
+
+            position.coords.longitude
+
+          ];
+
+
+          L.marker(
+            latLng
+          )
+          .addTo(map)
+          .bindPopup(
+            '📍 Jij bent hier'
+          )
+          .openPopup();
+
+
+          map.setView(
+            latLng,
+            17
+          );
+
+
+          status.textContent =
+            '📍 Jouw locatie is op de kaart gezet.';
+
+        },
+
+
+        () => {
+
+          status.textContent =
+            '⚠️ Locatie kon niet worden opgehaald.';
+
+        }
+
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   MUZIEK
+========================================================= */
+
+const backgroundMusic =
+  document.getElementById(
+    'backgroundMusic'
+  );
+
+
+const musicBtn =
+  document.getElementById(
+    'musicBtn'
+  );
+
+
+const musicStatus =
+  document.getElementById(
+    'musicStatus'
+  );
+
+
+let musicOn =
+  false;
+
+
+async function playMusic() {
+
+  try {
+
+    await backgroundMusic.play();
+
+
+    musicOn =
+      true;
+
+
+    musicBtn.textContent =
+      '🔇 Muziek uit';
+
+
+    musicStatus.textContent =
+      '🎵 Ouderbatterij speelt nu op de achtergrond.';
+
+  }
+
+  catch(error) {
+
+    musicStatus.textContent =
+      '⚠️ De muziek kon niet starten. Controleer of Ouderbatterij.mp3 naast index.html staat.';
+
+  }
+
+}
+
+
+function pauseMusic() {
+
+  backgroundMusic.pause();
+
+
+  musicOn =
+    false;
+
+
+  musicBtn.textContent =
+    '🔊 Muziek aan';
+
+
+  musicStatus.textContent =
+    '🎵 Muziek staat uit.';
+
+}
+
+
+musicBtn.addEventListener(
+  'click',
+  () =>
+    musicOn
+      ? pauseMusic()
+      : playMusic()
+);
+
+
+/* =========================================================
+   ALLES RENDEREN
+========================================================= */
+
+function renderAll() {
+
+  /*
+   * Dag/tabel
+   */
+
+  renderDay();
+
+
+  /*
+   * Geschiedenis
+   */
+
+  renderHistory();
+
+
+  /*
+   * BELANGRIJKE FIX:
+   *
+   * De plot van Vandaag werd eerder niet
+   * aangeroepen. Hierdoor bleef scoreChart
+   * leeg ondanks dat de meetpunten wel in
+   * localStorage stonden.
+   */
+
+  renderChart();
+
+
+  /*
+   * Meerdaagse grafiek
+   */
+
+  renderOverviewDayChecks();
+
+  renderOverviewChart();
+
+
+  updateViewButtons();
+
+
+  saveState();
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
 renderAll();
+
 </script>
+
 </body>
 </html>
