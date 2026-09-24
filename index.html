@@ -3,468 +3,390 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>De Ouderbatterij — Efteling Score Tracker</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<title>De Ouderbatterij — Efteling Bezoektracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          eft: {
-            green: '#123524',
-            green2: '#1b4d34',
-            gold: '#d4af37',
-            gold2: '#f2d675',
-            cream: '#f7f3e8'
-          }
-        },
-        fontFamily: {
-          display: ['Georgia', 'serif']
-        }
-      }
-    }
-  }
+tailwind.config={theme:{extend:{colors:{eft:{green:'#123524',green2:'#1b4d34',gold:'#d4af37',gold2:'#f2d675',cream:'#f7f3e8'}},fontFamily:{display:['Georgia','serif']}}}}
 </script>
-
 <style>
-  body { background: radial-gradient(circle at top, #1b4d34 0%, #0d2419 70%); }
-  .gold-border { border: 1px solid rgba(212,175,55,0.4); }
-  #map { height: 380px; border-radius: 0.75rem; z-index: 0; }
-  .leaflet-popup-content-wrapper { background: #123524; color: #f7f3e8; border-radius: 0.5rem; }
-  .leaflet-popup-tip { background: #123524; }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 22px; height: 22px; border-radius: 50%;
-    background: #d4af37; border: 2px solid #123524; cursor: pointer; margin-top: -8px;
-  }
-  input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 4px; background: #3a6b4f; }
-  input[type=range]::-moz-range-thumb {
-    width: 22px; height: 22px; border-radius: 50%; background: #d4af37; border: 2px solid #123524; cursor: pointer;
-  }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
-  .fade-in { animation: fadeIn 0.4s ease; }
-  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform: translateY(0);} }
+body{background:radial-gradient(circle at top,#1b4d34 0%,#0d2419 70%)}
+.gold-border{border:1px solid rgba(212,175,55,.4)}
+#map{height:430px;border-radius:.75rem;z-index:0}
+.leaflet-popup-content-wrapper{background:#123524;color:#f7f3e8;border-radius:.5rem}
+.leaflet-popup-tip{background:#123524}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#d4af37;border:2px solid #123524;cursor:pointer;margin-top:-8px}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:4px;background:#3a6b4f}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#d4af37;border:2px solid #123524;cursor:pointer}
+::-webkit-scrollbar{width:8px;height:8px}.gold-scroll::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb{background:#d4af37;border-radius:4px}
+.fade-in{animation:fadeIn .35s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tab-active{background:#d4af37;color:#123524}.day-tab{white-space:nowrap}
+.music-embed{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0}
 </style>
 </head>
-<body class="min-h-screen text-eft-cream font-sans pb-16">
-
-<header class="px-4 pt-8 pb-4 text-center">
+<body class="min-h-screen text-eft-cream font-sans pb-10">
+<header class="px-4 pt-7 pb-4 text-center">
   <h1 class="font-display text-3xl sm:text-4xl font-bold text-eft-gold tracking-wide drop-shadow">🏰 De Ouderbatterij</h1>
-  <p class="text-eft-cream/70 mt-1 text-sm sm:text-base">Efteling Score Tracker — hoeveel energie heeft dit ritje gekost (of gegeven)?</p>
+  <p class="text-eft-cream/70 mt-1 text-sm sm:text-base">Efteling Bezoektracker — hoeveel energie heeft dit moment gekost (of gegeven)?</p>
 </header>
 
-<main class="max-w-5xl mx-auto px-4 space-y-6">
+<main class="max-w-6xl mx-auto px-4 space-y-5">
+  <!-- DAGTABS -->
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-3 shadow-xl">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 gold-scroll" id="dayTabs"></div>
+  </section>
 
-  <!-- MAP CARD -->
+  <!-- KAART -->
   <section class="bg-eft-green/60 gold-border rounded-2xl p-4 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <h2 class="font-display text-xl text-eft-gold">Plattegrond</h2>
-      <button id="locateBtn" class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-4 py-2 rounded-lg shadow transition">
-        📍 Vind mijn locatie
-      </button>
+      <div>
+        <h2 class="font-display text-xl text-eft-gold">Plattegrond</h2>
+        <p class="text-xs text-eft-cream/55">Leaflet-kaart met attracties, eten, shows, souvenirs en rijken.</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="locateBtn" class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition">📍 Mijn locatie</button>
+        <button id="musicBtn" class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition">🔇 Muziek uit</button>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+      <label class="text-xs text-eft-cream/70">Categorie
+        <select id="mapCategory" class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2">
+          <option value="alle">Alles</option><option value="attractie">🎢 Attracties</option>
+          <option value="restaurant">🍴 Restaurants</option><option value="show">🎭 Parkshows</option><option value="souvenir">🛍️ Souvenirs</option><option value="rijk">🏰 Rijken</option>
+        </select>
+      </label>
+      <label class="text-xs text-eft-cream/70">Rijk
+        <select id="mapRealm" class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2">
+          <option value="alle">Alle rijken</option><option>Marerijk</option><option>Reizenrijk</option><option>Ruigrijk</option><option>Anderrijk</option><option>Fantasierijk</option>
+        </select>
+      </label>
     </div>
     <div id="map"></div>
     <p id="locStatus" class="text-xs text-eft-cream/60 mt-2"></p>
+    <p class="text-[11px] text-eft-cream/40 mt-1">De Efteling biedt voor actuele kaartinformatie de Efteling-app; deze tool gebruikt een eigen Leaflet-kaart. </p>
   </section>
 
-  <!-- FORM CARD -->
+  <!-- REGISTREREN -->
   <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <h2 class="font-display text-xl text-eft-gold mb-4">Bezoek registreren</h2>
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div><h2 class="font-display text-xl text-eft-gold">Bezoek registreren</h2><p id="selectedDayLabel" class="text-xs text-eft-cream/55 mt-1"></p></div>
+      <a href="https://www.efteling.com/nl/park/plattegrond" target="_blank" rel="noopener" class="text-xs text-eft-gold underline">Actuele Efteling-informatie ↗</a>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4 mt-4">
       <div>
-        <label class="block text-sm mb-1 text-eft-cream/80">Attractie / eetgelegenheid</label>
-        <select id="attractionSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-eft-gold">
+        <label class="block text-sm mb-1 text-eft-cream/80">Categorie</label>
+        <select id="categorySelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
+          <option value="attractie">🎢 Attractie</option><option value="restaurant">🍴 Restaurant</option><option value="show">🎭 Parkshow</option><option value="souvenir">🛍️ Souvenirwinkel</option><option value="overig">✍️ Overig</option>
         </select>
       </div>
       <div>
+        <label class="block text-sm mb-1 text-eft-cream/80">Rijk</label>
+        <select id="realmSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"><option value="">Onbekend / niet van toepassing</option><option>Marerijk</option><option>Reizenrijk</option><option>Ruigrijk</option><option>Anderrijk</option><option>Fantasierijk</option></select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm mb-1 text-eft-cream/80">Wat heb je gedaan?</label>
+        <select id="placeSelect" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"></select>
+        <input id="customPlace" type="text" placeholder="Vrije tekst, bijvoorbeeld: ijsje bij de vijver" class="hidden mt-2 w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
+      </div>
+      <div>
         <label class="block text-sm mb-1 text-eft-cream/80">Datum & tijd</label>
-        <input id="dateTimeInput" type="datetime-local" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-eft-gold" />
+        <input id="dateTimeInput" type="datetime-local" class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium">
+      </div>
+      <div>
+        <label class="block text-sm mb-1 text-eft-cream/80">Score: <span id="scoreValue" class="text-eft-gold font-bold text-lg">50</span> / 100</label>
+        <input id="scoreSlider" type="range" min="0" max="100" value="50" class="w-full mt-2">
+        <div class="flex justify-between text-xs text-eft-cream/50 mt-1"><span>😵 Leeg</span><span>🙂 Prima</span><span>🔋 Volle batterij</span></div>
       </div>
     </div>
-
-    <div class="mt-5">
-      <label class="block text-sm mb-1 text-eft-cream/80">
-        Score: <span id="scoreValue" class="text-eft-gold font-bold text-lg">50</span> / 100
-      </label>
-      <input id="scoreSlider" type="range" min="0" max="100" value="50" class="w-full" />
-      <div class="flex justify-between text-xs text-eft-cream/50 mt-1">
-        <span>😵 Leeg</span><span>🙂 Prima</span><span>🔋 Volle batterij</span>
-      </div>
-    </div>
-
-    <button id="saveBtn" class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition">
-      💾 Bezoek opslaan
-    </button>
+    <button id="saveBtn" class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition">💾 Bezoek opslaan</button>
     <span id="savedMsg" class="ml-3 text-sm text-eft-gold2 hidden">Opgeslagen!</span>
   </section>
 
-  <!-- CHART CARD -->
+  <!-- DAGOVERZICHT -->
   <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <h2 class="font-display text-xl text-eft-gold mb-4">Scoreverloop</h2>
-    <canvas id="scoreChart" height="130"></canvas>
-  </section>
-
-  <!-- TABLE CARD -->
-  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-xl text-eft-gold">Geschiedenis</h2>
-      <button id="clearBtn" class="text-xs text-eft-cream/50 hover:text-red-300 underline">Alles wissen</button>
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div><h2 id="historyTitle" class="font-display text-xl text-eft-gold">Vandaag</h2><p id="daySummary" class="text-xs text-eft-cream/55"></p></div>
+      <button id="clearDayBtn" class="text-xs text-eft-cream/50 hover:text-red-300 underline">Deze dag wissen</button>
     </div>
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-eft-gold/80 border-b border-eft-gold/30">
-            <th class="text-left py-2 pr-2">Attractie / eten</th>
-            <th class="text-left py-2 pr-2">Tijdstip</th>
-            <th class="text-left py-2 pr-2">Score</th>
-            <th class="py-2"></th>
-          </tr>
-        </thead>
-        <tbody id="historyBody"></tbody>
-      </table>
-      <p id="emptyMsg" class="text-eft-cream/50 text-sm py-4 text-center">Nog geen bezoeken opgeslagen.</p>
+      <table class="w-full text-sm"><thead><tr class="text-eft-gold/80 border-b border-eft-gold/30"><th class="text-left py-2 pr-2">Categorie</th><th class="text-left py-2 pr-2">Moment</th><th class="text-left py-2 pr-2">Tijdstip</th><th class="text-left py-2 pr-2">Score</th><th></th></tr></thead><tbody id="historyBody"></tbody></table>
+      <p id="emptyMsg" class="text-eft-cream/50 text-sm py-4 text-center">Nog geen bezoeken op deze dag.</p>
     </div>
   </section>
 
+  <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+    <h2 class="font-display text-xl text-eft-gold mb-4">Scoreverloop</h2>
+    <canvas id="scoreChart" height="120"></canvas>
+  </section>
+
+  <!-- ALLE DAGEN -->
+  <section id="allDaysSection" class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl hidden">
+    <div class="flex items-center justify-between mb-4"><h2 class="font-display text-xl text-eft-gold">Overzicht van alle dagen</h2><span id="allDaysCount" class="text-xs text-eft-cream/50"></span></div>
+    <div id="allDaysList" class="space-y-2"></div>
+  </section>
 </main>
 
-<script>
-// ---------- CDN LOAD GUARD ----------
-window.addEventListener('DOMContentLoaded', () => {
-  const missing = [];
-  if (typeof L === 'undefined') missing.push('Leaflet (kaart)');
-  if (typeof Chart === 'undefined') missing.push('Chart.js (grafieken)');
-  if (missing.length) {
-    const warn = document.createElement('div');
-    warn.className = 'max-w-5xl mx-auto px-4';
-    warn.innerHTML = `<div class="bg-red-900/70 border border-red-400 text-red-100 rounded-xl p-4 mb-4 text-sm">
-      ⚠️ Kon de volgende bibliotheek(en) niet laden: <b>${missing.join(', ')}</b>.
-      Controleer je internetverbinding, adblocker of contentblocker-instellingen en herlaad de pagina.
-    </div>`;
-    document.querySelector('main').prepend(warn);
-  }
-});
-</script>
-<script>
-// ---------- DATA ----------
-// Let op: coördinaten zijn met de hand benaderd binnen het parkgebied van de Efteling
-// (geen officiële, exact vermeten GPS-data) — nauwkeurig genoeg voor deze tracker.
-const POIS = [
-  // --- Attracties ---
-  { name: "Baron 1898", type: "attractie", lat: 51.64876, lng: 5.04594 },
-  { name: "Joris en de Draak", type: "attractie", lat: 51.65065, lng: 5.04716 },
-  { name: "Symbolica", type: "attractie", lat: 51.65038, lng: 5.04996 },
-  { name: "Python", type: "attractie", lat: 51.65114, lng: 5.05068 },
-  { name: "Droomvlucht", type: "attractie", lat: 51.64988, lng: 5.04982 },
-  { name: "Danse Macabre", type: "attractie", lat: 51.64791, lng: 5.05088 },
-  { name: "De Vliegende Hollander", type: "attractie", lat: 51.64780, lng: 5.04540 },
-  { name: "Vogel Rok", type: "attractie", lat: 51.65200, lng: 5.05180 },
-  { name: "Villa Volta", type: "attractie", lat: 51.64850, lng: 5.05050 },
-  { name: "Fabula", type: "attractie", lat: 51.64980, lng: 5.05080 },
-  { name: "Spookslot", type: "attractie", lat: 51.64830, lng: 5.05000 },
-  { name: "Max & Moritz", type: "attractie", lat: 51.64720, lng: 5.04630 },
-  { name: "Piraña", type: "attractie", lat: 51.64650, lng: 5.04800 },
-  { name: "Fata Morgana", type: "attractie", lat: 51.64930, lng: 5.04920 },
-  { name: "Sirocco", type: "attractie", lat: 51.65220, lng: 5.05230 },
-  { name: "The Six Swans", type: "attractie", lat: 51.65080, lng: 5.05000 },
-  { name: "Gondoletta", type: "attractie", lat: 51.65000, lng: 5.04700 },
-  { name: "Stoomcarrousel", type: "attractie", lat: 51.64950, lng: 5.04650 },
-  { name: "Halve Maen", type: "attractie", lat: 51.64780, lng: 5.04500 },
-  { name: "De Oude Tufferbaan", type: "attractie", lat: 51.64700, lng: 5.04550 },
-  { name: "Monorail", type: "attractie", lat: 51.65100, lng: 5.04900 },
-  { name: "Sprookjesbos", type: "attractie", lat: 51.64900, lng: 5.04550 },
-  { name: "Aquanura", type: "attractie", lat: 51.64800, lng: 5.04750 },
-  { name: "Archipel", type: "attractie", lat: 51.65250, lng: 5.05300 },
-  { name: "Raveleijn", type: "attractie", lat: 51.64670, lng: 5.04680 },
+<footer class="max-w-6xl mx-auto px-4 pt-8 text-center text-xs text-eft-cream/50">
+  Deze tool is gebouwd met AI2 (Anika & Artificiële intelligentie)
+</footer>
 
-  // --- Eten & drinken ---
-  { name: "Kashba", type: "eten", lat: 51.65030, lng: 5.05200 },
-  { name: "Het Wapen van Raveleijn", type: "eten", lat: 51.64670, lng: 5.04680 },
-  { name: "Polles Keuken", type: "eten", lat: 51.65000, lng: 5.05000 },
-  { name: "Pinokkio's Pizza & Pasta", type: "eten", lat: 51.64780, lng: 5.04350 },
-  { name: "Panorama à la carte", type: "eten", lat: 51.65030, lng: 5.05220 },
-  { name: "In den Swarte Kat", type: "eten", lat: 51.64850, lng: 5.04980 },
-  { name: "Restaurant Fabula", type: "eten", lat: 51.64990, lng: 5.05090 },
-  { name: "Bäckerei Krümel", type: "eten", lat: 51.64700, lng: 5.04620 },
-  { name: "'t Verwende Nest!", type: "eten", lat: 51.65120, lng: 5.04750 },
-  { name: "Frau Boltes Küche", type: "eten", lat: 51.65200, lng: 5.05000 },
-  { name: "De Gelaarsde Kat", type: "eten", lat: 51.64880, lng: 5.04530 },
-  { name: "Het Witte Paard", type: "eten", lat: 51.64920, lng: 5.04680 },
-  { name: "Kleyne Klaroen", type: "eten", lat: 51.64870, lng: 5.04520 },
-  { name: "'t Melkhuysje", type: "eten", lat: 51.64840, lng: 5.04620 },
-  { name: "'t Poffertje", type: "eten", lat: 51.64950, lng: 5.04750 },
-  { name: "Toko Pagoda", type: "eten", lat: 51.65280, lng: 5.05180 },
-  { name: "Station De Oost", type: "eten", lat: 51.65100, lng: 5.05250 }
+<iframe id="musicEmbed" class="music-embed" title="Achtergrondmuziek" allow="autoplay" src="https://suno.com/embed/0d769865-fc65-4294-b673-ec42d2c9cbca?autoplay=1"></iframe>
+
+<script>
+// Actuele namen zijn gebaseerd op de door Efteling gepubliceerde overzichten; kaartposities zijn praktische, benaderde Leaflet-posities.
+const POIS=[
+{name:"Danse Macabre",type:"attractie",realm:"Ruigrijk",lat:51.64791,lng:5.05088},
+{name:"Baron 1898",type:"attractie",realm:"Ruigrijk",lat:51.64876,lng:5.04594},
+{name:"Hooghmoed",type:"attractie",realm:"Ruigrijk",lat:51.64845,lng:5.04655},
+{name:"Joris en de Draak",type:"attractie",realm:"Ruigrijk",lat:51.65065,lng:5.04716},
+{name:"De Vliegende Hollander",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04540},
+{name:"Python",type:"attractie",realm:"Ruigrijk",lat:51.65114,lng:5.05068},
+{name:"Piraña",type:"attractie",realm:"Ruigrijk",lat:51.64650,lng:5.04800},
+{name:"Halve Maen",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04500},
+{name:"De Oude Tufferbaan",type:"attractie",realm:"Ruigrijk",lat:51.64700,lng:5.04550},
+{name:"Stoomcarrousel",type:"attractie",realm:"Marerijk",lat:51.64950,lng:5.04650},
+{name:"Villa Volta",type:"attractie",realm:"Marerijk",lat:51.64850,lng:5.05050},
+{name:"Droomvlucht",type:"attractie",realm:"Marerijk",lat:51.64988,lng:5.04982},
+{name:"Sprookjesbos",type:"attractie",realm:"Marerijk",lat:51.64900,lng:5.04550},
+{name:"Het Volk van Laaf",type:"attractie",realm:"Marerijk",lat:51.64890,lng:5.04730},
+{name:"Anton Pieckplein",type:"attractie",realm:"Marerijk",lat:51.64935,lng:5.04700},
+{name:"Kleuterhof",type:"attractie",realm:"Marerijk",lat:51.64870,lng:5.04780},
+{name:"Kindervreugd",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04820},
+{name:"Kinderspoor",type:"attractie",realm:"Marerijk",lat:51.64920,lng:5.04880},
+{name:"Symbolica",type:"attractie",realm:"Fantasierijk",lat:51.65038,lng:5.04996},
+{name:"Pagode",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05180},
+{name:"Gondoletta",type:"attractie",realm:"Fantasierijk",lat:51.65000,lng:5.04700},
+{name:"The Six Swans",type:"attractie",realm:"Fantasierijk",lat:51.65080,lng:5.05000},
+{name:"Monorail",type:"attractie",realm:"Fantasierijk",lat:51.65100,lng:5.04900},
+{name:"Fabula",type:"attractie",realm:"Anderrijk",lat:51.64980,lng:5.05080},
+{name:"Fata Morgana",type:"attractie",realm:"Anderrijk",lat:51.64930,lng:5.04920},
+{name:"Vogel Rok",type:"attractie",realm:"Reizenrijk",lat:51.65200,lng:5.05180},
+{name:"Sirocco",type:"attractie",realm:"Reizenrijk",lat:51.65220,lng:5.05230},
+{name:"Archipel",type:"attractie",realm:"Reizenrijk",lat:51.65250,lng:5.05300},
+{name:"Carnaval Festival",type:"attractie",realm:"Reizenrijk",lat:51.65230,lng:5.05080},
+{name:"Nest!",type:"attractie",realm:"Reizenrijk",lat:51.65170,lng:5.05100},
+{name:"Stoomtrein",type:"attractie",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
+{name:"Efteling Museum",type:"attractie",realm:"Marerijk",lat:51.64960,lng:5.04690},
+{name:"Diorama",type:"attractie",realm:"Marerijk",lat:51.64970,lng:5.04730},
+{name:"Holle Bolle Gijs",type:"attractie",realm:"Marerijk",lat:51.64910,lng:5.04620},
+{name:"Game Gallery",type:"attractie",realm:"Marerijk",lat:51.64880,lng:5.04690},
+{name:"Raveleijn",type:"attractie",realm:"Marerijk",lat:51.64670,lng:5.04680},
+
+{name:"Polles Keuken",type:"restaurant",realm:"Fantasierijk",lat:51.65000,lng:5.05000},
+{name:"Pinokkio's pizza & pasta restaurant",type:"restaurant",realm:"Marerijk",lat:51.64780,lng:5.04350},
+{name:"In den Swarte Kat",type:"restaurant",realm:"Marerijk",lat:51.64850,lng:5.04980},
+{name:"'t Koetshuys",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04770},
+{name:"Restaurant Kashba",type:"restaurant",realm:"Reizenrijk",lat:51.65030,lng:5.05200},
+{name:"Bäckerei Krümel",type:"restaurant",realm:"Marerijk",lat:51.64700,lng:5.04620},
+{name:"Brasserie 7",type:"restaurant",realm:"Marerijk",lat:51.65020,lng:5.04580},
+{name:"Restaurant Mystique",type:"restaurant",realm:"Marerijk",lat:51.65010,lng:5.04590},
+{name:"Restaurant Saga",type:"restaurant",realm:"Marerijk",lat:51.65000,lng:5.04600},
+{name:"'t Verwende Nest!",type:"restaurant",realm:"Reizenrijk",lat:51.65120,lng:5.04750},
+{name:"Frau Boltes Küche",type:"restaurant",realm:"Reizenrijk",lat:51.65200,lng:5.05000},
+{name:"Fabula Wereldkeuken",type:"restaurant",realm:"Anderrijk",lat:51.64990,lng:5.05090},
+{name:"In de Gelaarsde Kat",type:"restaurant",realm:"Marerijk",lat:51.64880,lng:5.04530},
+{name:"Het Witte Paard",type:"restaurant",realm:"Marerijk",lat:51.64920,lng:5.04680},
+{name:"Kleyne Klaroen",type:"restaurant",realm:"Marerijk",lat:51.64870,lng:5.04520},
+{name:"'t Melkhuysje",type:"restaurant",realm:"Marerijk",lat:51.64840,lng:5.04620},
+{name:"'t Poffertje",type:"restaurant",realm:"Marerijk",lat:51.64950,lng:5.04750},
+{name:"Toko Pagode",type:"restaurant",realm:"Fantasierijk",lat:51.65280,lng:5.05180},
+{name:"Station de Oost",type:"restaurant",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
+
+{name:"Magicaluna",type:"show",realm:"Reizenrijk",lat:51.65180,lng:5.05200},
+{name:"Aquanura",type:"show",realm:"Ruigrijk",lat:51.64800,lng:5.04750},
+{name:"Ontmoet & begroet Efteling-bewoners",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04700},
+{name:"Ontmoet & begroet Pardoes de Tovernar",type:"show",realm:"Fantasierijk",lat:51.65040,lng:5.05020},
+{name:"Sprookjesboomshow",type:"show",realm:"Marerijk",lat:51.64920,lng:5.04580},
+{name:"Jokie en Jet",type:"show",realm:"Reizenrijk",lat:51.65200,lng:5.05060},
+{name:"Dr. Charlatans Cabaret Macabre",type:"show",realm:"Ruigrijk",lat:51.64780,lng:5.05050},
+{name:"De Huyveraars",type:"show",realm:"Ruigrijk",lat:51.64810,lng:5.05080},
+{name:"Sprookjessprokkelaar",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04600},
+{name:"Bakker Krümel en Frau Schmetterling",type:"show",realm:"Marerijk",lat:51.64710,lng:5.04620},
+
+{name:"Efteldingen",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04600},
+{name:"Arcadeau",type:"souvenir",realm:"Marerijk",lat:51.65010,lng:5.04570},
+{name:"In den Ouden Marskramer",type:"souvenir",realm:"Marerijk",lat:51.64910,lng:5.04630},
+{name:"Jokies Wereld",type:"souvenir",realm:"Reizenrijk",lat:51.65200,lng:5.05020},
+{name:"Cascada",type:"souvenir",realm:"Ruigrijk",lat:51.64670,lng:5.04780},
+{name:"Spiegeltje, Spiegeltje...",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04700},
+{name:"Dr. Charlatans Kwalycke Zaken",type:"souvenir",realm:"Ruigrijk",lat:51.64790,lng:5.05060},
+{name:"Symbolica",type:"souvenir",realm:"Fantasierijk",lat:51.65040,lng:5.05010},
+{name:"'t Boeghbeeld",type:"souvenir",realm:"Ruigrijk",lat:51.64780,lng:5.04520},
+{name:"De Bazaar",type:"souvenir",realm:"Anderrijk",lat:51.64940,lng:5.04900},
+{name:"Dromerijen",type:"souvenir",realm:"Marerijk",lat:51.64990,lng:5.04970},
+{name:"Fabula",type:"souvenir",realm:"Anderrijk",lat:51.64990,lng:5.05080},
+{name:"De Gevoelighe Plaet",type:"souvenir",realm:"Ruigrijk",lat:51.64870,lng:5.04600}
 ];
 
-const STORAGE_KEY = "ouderbatterij_visits";
-const DETECT_RADIUS_M = 50;
+const REALMS=[
+{name:"Marerijk",lat:51.64905,lng:5.04705},
+{name:"Reizenrijk",lat:51.65200,lng:5.05170},
+{name:"Ruigrijk",lat:51.64780,lng:5.04700},
+{name:"Anderrijk",lat:51.64955,lng:5.04980},
+{name:"Fantasierijk",lat:51.65055,lng:5.05035}
+];
+const TYPE_LABEL={attractie:"🎢 Attractie",restaurant:"🍴 Restaurant",show:"🎭 Parkshow",souvenir:"🛍️ Souvenir",overig:"✍️ Overig"};
+const STORAGE_KEY="ouderbatterij_v3";
+const musicEmbed=document.getElementById('musicEmbed');
+const map=L.map('map').setView([51.6495,5.0485],16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
 
-// Deterministische kleur per naam (voor puntkleuren in de scoreverloop-grafiek)
-function colorForName(name) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 65%, 60%)`;
+function iconFor(type){
+ const bg={attractie:'#d4af37',restaurant:'#e2725b',show:'#7c83fd',souvenir:'#d06adf',rijk:'#55a36f'}[type]||'#d4af37';
+ const shape=type==='restaurant'?'border-radius:4px':type==='show'?'border-radius:50%':type==='souvenir'?'border-radius:2px;transform:rotate(45deg)':'border-radius:50%';
+ return L.divIcon({html:`<div style="background:${bg};width:15px;height:15px;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,.5);${shape}"></div>`,className:'',iconSize:[15,15],iconAnchor:[7,7]});
 }
-
-// ---------- MAP ----------
-const map = L.map('map').setView([51.6495, 5.0485], 16);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors',
-  maxZoom: 19
-}).addTo(map);
-
-const goldIcon = L.divIcon({
-  html: '<div style="background:#d4af37;width:16px;height:16px;border-radius:50%;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,0.5)"></div>',
-  className: '', iconSize: [16,16], iconAnchor: [8,8]
+const markers=[];
+const poiMarkers={};
+function popupFor(p){return `<b>${TYPE_LABEL[p.type]||''} ${p.name}</b><br><span style="opacity:.75">${p.realm||''}</span>`}
+POIS.forEach(p=>{
+ const m=L.marker([p.lat,p.lng],{icon:iconFor(p.type)}).addTo(map).bindPopup(popupFor(p));
+ m.on('click',()=>selectPlaceFromMap(p));
+ markers.push({obj:m,data:p}); poiMarkers[p.name]=m;
 });
-const foodIcon = L.divIcon({
-  html: '<div style="background:#e2725b;width:14px;height:14px;border-radius:3px;border:2px solid #123524;box-shadow:0 0 4px rgba(0,0,0,0.5)"></div>',
-  className: '', iconSize: [14,14], iconAnchor: [7,7]
+REALMS.forEach(r=>{
+ const m=L.marker([r.lat,r.lng],{icon:iconFor('rijk')}).addTo(map).bindPopup(`<b>🏰 ${r.name}</b><br><span style="opacity:.75">Rijk</span>`);
+ markers.push({obj:m,data:{...r,type:'rijk'}});
 });
-
-const poiMarkers = {};
-POIS.forEach(p => {
-  const icon = p.type === 'eten' ? foodIcon : goldIcon;
-  const label = p.type === 'eten' ? `🍴 ${p.name}` : `🎢 ${p.name}`;
-  const m = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(`<b>${label}</b>`);
-  m.on('click', () => {
-    attractionSelect.value = p.name;
-    locStatus.textContent = `🖱️ "${p.name}" geselecteerd via kaart.`;
-  });
-  poiMarkers[p.name] = m;
-});
-
-let userMarker = null;
-let userCircle = null;
-
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const toRad = d => d * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return 2 * R * Math.asin(Math.sqrt(a));
+function selectPlaceFromMap(p){
+ categorySelect.value=p.type; realmSelect.value=p.realm||''; populatePlaces(); placeSelect.value=p.name; customPlace.classList.add('hidden');
+ locStatus.textContent=`🖱️ "${p.name}" geselecteerd via de kaart.`;
 }
-
-const locStatus = document.getElementById('locStatus');
-const attractionSelect = document.getElementById('attractionSelect');
-
-(() => {
-  const groupAttracties = document.createElement('optgroup');
-  groupAttracties.label = '🎢 Attracties';
-  const groupEten = document.createElement('optgroup');
-  groupEten.label = '🍴 Eten & drinken';
-
-  POIS.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.name;
-    opt.textContent = p.name;
-    (p.type === 'eten' ? groupEten : groupAttracties).appendChild(opt);
-  });
-
-  attractionSelect.appendChild(groupAttracties);
-  attractionSelect.appendChild(groupEten);
-})();
-
-document.getElementById('locateBtn').addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    locStatus.textContent = "Geolocation wordt niet ondersteund door je browser.";
-    return;
-  }
-  locStatus.textContent = "Locatie zoeken...";
-  navigator.geolocation.watchPosition(pos => {
-    const { latitude, longitude, accuracy } = pos.coords;
-    if (!userMarker) {
-      userMarker = L.circleMarker([latitude, longitude], {
-        radius: 8, color: '#4f9dff', fillColor: '#4f9dff', fillOpacity: 0.9, weight: 2
-      }).addTo(map).bindPopup("Jij bent hier");
-      userCircle = L.circle([latitude, longitude], { radius: accuracy, color: '#4f9dff', fillOpacity: 0.08, weight: 1 }).addTo(map);
-      map.setView([latitude, longitude], 17);
-    } else {
-      userMarker.setLatLng([latitude, longitude]);
-      userCircle.setLatLng([latitude, longitude]);
-      userCircle.setRadius(accuracy);
-    }
-
-    let closest = null, closestDist = Infinity;
-    POIS.forEach(p => {
-      const d = haversine(latitude, longitude, p.lat, p.lng);
-      if (d < closestDist) { closestDist = d; closest = p; }
-    });
-
-    if (closest && closestDist <= DETECT_RADIUS_M) {
-      attractionSelect.value = closest.name;
-      locStatus.textContent = `📍 Gedetecteerd bij "${closest.name}" (${closestDist.toFixed(0)}m)`;
-    } else {
-      locStatus.textContent = `Live locatie actief. Dichtstbijzijnde attractie: ${closest ? closest.name : '-'} (${closestDist.toFixed(0)}m)`;
-    }
-  }, err => {
-    locStatus.textContent = "Kon locatie niet bepalen: " + err.message;
-  }, { enableHighAccuracy: true, maximumAge: 5000 });
-});
-
-// ---------- DATE/TIME AUTO-FILL ----------
-function nowLocalISO() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0,16);
+function filterMap(){
+ const c=mapCategory.value,r=mapRealm.value;
+ markers.forEach(x=>{
+   const show=(c==='alle'||x.data.type===c)&&(r==='alle'||x.data.realm===r);
+   if(show&&!map.hasLayer(x.obj))x.obj.addTo(map);
+   if(!show&&map.hasLayer(x.obj))map.removeLayer(x.obj);
+ });
 }
-document.getElementById('dateTimeInput').value = nowLocalISO();
+mapCategory.onchange=filterMap;mapRealm.onchange=filterMap;
 
-// ---------- SLIDER ----------
-const slider = document.getElementById('scoreSlider');
-const scoreValue = document.getElementById('scoreValue');
-slider.addEventListener('input', () => scoreValue.textContent = slider.value);
-
-// ---------- STORAGE ----------
-function loadVisits() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+const categorySelect=document.getElementById('categorySelect');
+const realmSelect=document.getElementById('realmSelect');
+const placeSelect=document.getElementById('placeSelect');
+const customPlace=document.getElementById('customPlace');
+function populatePlaces(){
+ const type=categorySelect.value;
+ placeSelect.innerHTML='';
+ const list=POIS.filter(p=>p.type===type).sort((a,b)=>a.name.localeCompare(b.name,'nl'));
+ list.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;placeSelect.appendChild(o)});
+ const free=document.createElement('option');free.value='__custom__';free.textContent='✍️ Vrije tekst...';placeSelect.appendChild(free);
+ customPlace.classList.toggle('hidden',placeSelect.value!=='__custom__');
 }
-function saveVisits(visits) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(visits));
+categorySelect.addEventListener('change',populatePlaces);
+placeSelect.addEventListener('change',()=>customPlace.classList.toggle('hidden',placeSelect.value!=='__custom__'));
+populatePlaces();
+
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function fmtDate(key){return new Date(key+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})}
+function nowLocalISO(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+document.getElementById('dateTimeInput').value=nowLocalISO();
+
+let state=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{days:[todayKey()],visits:[],active:todayKey()};
+if(!state.days.includes(todayKey())) state.days.unshift(todayKey());
+if(!state.active)state.active=todayKey();
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function dayVisits(day){return state.visits.filter(v=>v.day===day).sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))}
+function renderTabs(){
+ const el=document.getElementById('dayTabs');el.innerHTML='';
+ const overview=document.createElement('button');overview.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active==='__all__'?'tab-active':'bg-eft-green2'}`;overview.textContent='📚 Alle dagen';overview.onclick=()=>{state.active='__all__';renderAll()};el.appendChild(overview);
+ const today=document.createElement('button');today.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===todayKey()?'tab-active':'bg-eft-green2'}`;today.textContent='📅 Vandaag';today.onclick=()=>{state.active=todayKey();renderAll()};el.appendChild(today);
+ state.days.filter(d=>d!==todayKey()).sort().reverse().forEach(d=>{
+  const b=document.createElement('button');b.className=`px-4 py-2 rounded-lg font-semibold day-tab ${state.active===d?'tab-active':'bg-eft-green2'}`;b.textContent='📆 '+fmtDate(d);b.onclick=()=>{state.active=d;renderAll()};el.appendChild(b);
+ });
+ const add=document.createElement('button');add.className='px-3 py-2 rounded-lg bg-eft-gold text-eft-green font-bold day-tab';add.textContent='＋';add.title='Nieuwe dag toevoegen';add.onclick=addDay;el.appendChild(add);
 }
-
-let visits = loadVisits();
-
-function renderAll() {
-  renderTable();
-  renderChart();
+function addDay(){
+ const raw=prompt('Welke datum wil je toevoegen? Gebruik bijvoorbeeld 24-09-2026 of 2026-09-24.');
+ if(!raw)return;
+ let d=raw.trim();
+ if(/^\d{2}-\d{2}-\d{4}$/.test(d)){const [dd,mm,yyyy]=d.split('-');d=`${yyyy}-${mm}-${dd}`}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||isNaN(new Date(d+'T12:00:00').getTime())){alert('Dat lijkt geen geldige datum.');return}
+ if(!state.days.includes(d))state.days.push(d);
+ state.active=d;saveState();renderAll();
 }
-
-function renderTable() {
-  const body = document.getElementById('historyBody');
-  const emptyMsg = document.getElementById('emptyMsg');
-  body.innerHTML = '';
-  const sorted = [...visits].sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime));
-  if (sorted.length === 0) { emptyMsg.classList.remove('hidden'); return; }
-  emptyMsg.classList.add('hidden');
-  sorted.forEach(v => {
-    const tr = document.createElement('tr');
-    tr.className = "border-b border-eft-gold/10 fade-in";
-    const dt = new Date(v.dateTime);
-    const formatted = dt.toLocaleString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    tr.innerHTML = `
-      <td class="py-2 pr-2">${v.attraction}</td>
-      <td class="py-2 pr-2 text-eft-cream/70">${formatted}</td>
-      <td class="py-2 pr-2"><span class="text-eft-gold font-semibold">${v.score}</span></td>
-      <td class="py-2 text-right"><button data-id="${v.id}" class="delBtn text-eft-cream/40 hover:text-red-300">✕</button></td>
-    `;
-    body.appendChild(tr);
-  });
-  document.querySelectorAll('.delBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      visits = visits.filter(v => v.id !== btn.dataset.id);
-      saveVisits(visits);
-      renderAll();
-    });
-  });
+function renderDay(){
+ const all=state.active==='__all__';
+ document.getElementById('allDaysSection').classList.toggle('hidden',!all);
+ document.getElementById('historyTitle').textContent=all?'Vandaag':(state.active===todayKey()?'Vandaag':fmtDate(state.active));
+ document.getElementById('selectedDayLabel').textContent=all?'Selecteer een dagtab om een bezoek te registreren.':'Registreren voor '+fmtDate(state.active);
+ const rows=all?[]:dayVisits(state.active);
+ const body=document.getElementById('historyBody');body.innerHTML='';
+ document.getElementById('emptyMsg').classList.toggle('hidden',all||rows.length>0);
+ rows.forEach(v=>{
+  const tr=document.createElement('tr');tr.className='border-b border-eft-gold/10 fade-in';
+  const dt=new Date(v.dateTime);
+  tr.innerHTML=`<td class="py-2 pr-2 text-xs">${TYPE_LABEL[v.type]||v.type}</td><td class="py-2 pr-2">${escapeHtml(v.place)}</td><td class="py-2 pr-2 text-eft-cream/70">${dt.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</td><td class="py-2 pr-2"><span class="text-eft-gold font-semibold">${v.score}</span></td><td class="py-2 text-right"><button data-id="${v.id}" class="delBtn text-eft-cream/40 hover:text-red-300">✕</button></td>`;
+  body.appendChild(tr);
+ });
+ document.querySelectorAll('.delBtn').forEach(b=>b.onclick=()=>{state.visits=state.visits.filter(v=>v.id!==b.dataset.id);saveState();renderAll()});
+ const avg=rows.length?Math.round(rows.reduce((s,v)=>s+v.score,0)/rows.length):0;
+ document.getElementById('daySummary').textContent=all?'':`${rows.length} moment${rows.length===1?'':'en'} · gemiddelde score ${rows.length?avg:'–'}`;
 }
-
-let chart = null;
-function renderChart() {
-  const sorted = [...visits].sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
-  const labels = sorted.map(v => v.attraction);
-  const data = sorted.map(v => v.score);
-  const pointColors = sorted.map(v => colorForName(v.attraction));
-  const ctx = document.getElementById('scoreChart').getContext('2d');
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Score',
-        data,
-        borderColor: '#d4af37',
-        backgroundColor: 'rgba(212,175,55,0.15)',
-        pointBackgroundColor: pointColors,
-        pointBorderColor: '#123524',
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { color: '#f7f3e8' } },
-        tooltip: {
-          callbacks: {
-            title: items => {
-              const v = sorted[items[0].dataIndex];
-              return `${v.attraction}`;
-            },
-            label: item => {
-              const v = sorted[item.dataIndex];
-              const dt = new Date(v.dateTime).toLocaleString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-              return [`Score: ${v.score}`, dt];
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: '#f7f3e8aa',
-            maxRotation: 60,
-            minRotation: 40,
-            autoSkip: true,
-            font: { size: 10 }
-          },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: { min: 0, max: 100, ticks: { color: '#f7f3e8aa' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-      }
-    }
-  });
+function renderAllDays(){
+ const list=document.getElementById('allDaysList');list.innerHTML='';
+ const days=[...new Set([...state.days,...state.visits.map(v=>v.day)])].sort().reverse();
+ document.getElementById('allDaysCount').textContent=`${days.length} dagen`;
+ days.forEach(d=>{
+  const vs=dayVisits(d),avg=vs.length?Math.round(vs.reduce((s,v)=>s+v.score,0)/vs.length):'–';
+  const div=document.createElement('button');div.className='w-full text-left bg-eft-green2/80 hover:bg-eft-green2 rounded-xl p-3 flex items-center justify-between';
+  div.innerHTML=`<span><b>${d===todayKey()?'📅 Vandaag':fmtDate(d)}</b><span class="block text-xs text-eft-cream/50">${vs.length} geregistreerde momenten</span></span><span class="text-eft-gold font-bold">${avg}</span>`;
+  div.onclick=()=>{state.active=d;renderAll()};list.appendChild(div);
+ });
 }
-
-function makeId() {
-  return 'v' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+let chart=null;
+function renderChart(){
+ const rows=state.active==='__all__'?state.visits.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime)):dayVisits(state.active);
+ const ctx=document.getElementById('scoreChart').getContext('2d');if(chart)chart.destroy();
+ chart=new Chart(ctx,{type:'line',data:{labels:rows.map(v=>v.place),datasets:[{label:'Score',data:rows.map(v=>v.score),borderColor:'#d4af37',backgroundColor:'rgba(212,175,55,.15)',pointRadius:6,tension:.3,fill:true}]},options:{responsive:true,plugins:{legend:{labels:{color:'#f7f3e8'}},tooltip:{callbacks:{label:i=>`Score: ${i.raw}`}}},scales:{x:{ticks:{color:'#f7f3e8aa',maxRotation:60,minRotation:40,autoSkip:true,font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:100,ticks:{color:'#f7f3e8aa'},grid:{color:'rgba(255,255,255,.05)'}}}}});
 }
+document.getElementById('saveBtn').onclick=()=>{
+ if(state.active==='__all__'){alert('Kies eerst Vandaag of een specifieke dag.');return}
+ let place=placeSelect.value==='__custom__'?customPlace.value.trim():placeSelect.value;
+ if(!place){alert('Vul een moment of vrije tekst in.');return}
+ const dt=document.getElementById('dateTimeInput').value;if(!dt)return;
+ const day=dt.slice(0,10);
+ if(!state.days.includes(day))state.days.push(day);
+ state.active=day;
+ state.visits.push({id:'v'+Date.now()+Math.random().toString(36).slice(2),day,type:categorySelect.value,realm:realmSelect.value,place,dateTime:dt,score:+document.getElementById('scoreSlider').value});
+ saveState();renderAll();
+ const msg=document.getElementById('savedMsg');msg.classList.remove('hidden');setTimeout(()=>msg.classList.add('hidden'),1600);
+ document.getElementById('dateTimeInput').value=nowLocalISO();
+};
+document.getElementById('clearDayBtn').onclick=()=>{
+ if(state.active==='__all__')return;
+ if(confirm('Alle registraties van deze dag wissen?')){state.visits=state.visits.filter(v=>v.day!==state.active);saveState();renderAll()}
+};
+document.getElementById('scoreSlider').oninput=e=>document.getElementById('scoreValue').textContent=e.target.value;
 
-// ---------- SAVE ----------
-document.getElementById('saveBtn').addEventListener('click', () => {
-  try {
-    const attraction = attractionSelect.value;
-    const dateTime = document.getElementById('dateTimeInput').value;
-    const score = parseInt(slider.value, 10);
-    if (!attraction || !dateTime) return;
+let userMarker=null,userCircle=null;
+function haversine(a,b,c,d){const R=6371000,toRad=x=>x*Math.PI/180,dLat=toRad(c-a),dLon=toRad(d-b),x=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+document.getElementById('locateBtn').onclick=()=>{
+ if(!navigator.geolocation){locStatus.textContent='Geolocation wordt niet ondersteund door je browser.';return}
+ locStatus.textContent='Locatie zoeken...';
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const {latitude,longitude,accuracy}=pos.coords;
+  if(!userMarker){userMarker=L.circleMarker([latitude,longitude],{radius:8,color:'#4f9dff',fillColor:'#4f9dff',fillOpacity:.9,weight:2}).addTo(map).bindPopup('Jij bent hier');userCircle=L.circle([latitude,longitude],{radius:accuracy,color:'#4f9dff',fillOpacity:.08,weight:1}).addTo(map)}else{userMarker.setLatLng([latitude,longitude]);userCircle.setLatLng([latitude,longitude]);userCircle.setRadius(accuracy)}
+  map.setView([latitude,longitude],17);
+  let closest=null,dist=Infinity;POIS.forEach(p=>{const x=haversine(latitude,longitude,p.lat,p.lng);if(x<dist){dist=x;closest=p}});
+  locStatus.textContent=closest?`📍 Dichtstbijzijnde: "${closest.name}" (${dist.toFixed(0)} m)`: 'Live locatie actief.';
+ },err=>locStatus.textContent='Kon locatie niet bepalen: '+err.message,{enableHighAccuracy:true,maximumAge:5000});
+};
 
-    visits.push({ id: makeId(), attraction, dateTime, score });
-    saveVisits(visits);
-    renderAll();
+let musicOn=true;
+document.getElementById('musicBtn').onclick=()=>{
+ musicOn=!musicOn;
+ document.getElementById('musicBtn').textContent=musicOn?'🔊 Muziek aan':'🔇 Muziek uit';
+ if(musicOn){musicEmbed.contentWindow?.postMessage({type:'play'},'*');try{musicEmbed.src='https://suno.com/embed/0d769865-fc65-4294-b673-ec42d2c9cbca?autoplay=1'}catch{}}
+ else{musicEmbed.contentWindow?.postMessage({type:'pause'},'*');musicEmbed.src='about:blank'}
+};
 
-    const msg = document.getElementById('savedMsg');
-    msg.classList.remove('hidden');
-    setTimeout(() => msg.classList.add('hidden'), 1800);
-
-    document.getElementById('dateTimeInput').value = nowLocalISO();
-  } catch (err) {
-    console.error('Opslaan mislukt:', err);
-    alert('Er ging iets mis bij het opslaan: ' + err.message);
-  }
-});
-
-document.getElementById('clearBtn').addEventListener('click', () => {
-  if (confirm("Weet je zeker dat je alle bezoeken wilt wissen?")) {
-    visits = [];
-    saveVisits(visits);
-    renderAll();
-  }
-});
-
+function renderAll(){renderTabs();renderDay();renderAllDays();renderChart();saveState()}
 renderAll();
 </script>
-
 </body>
 </html>
