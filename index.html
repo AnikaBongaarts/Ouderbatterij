@@ -8,10 +8,10 @@
 
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"
+  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
 >
 
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -37,14 +37,177 @@ tailwind.config = {
 </script>
 
 <style>
+:root {
+  --green: #123524;
+  --green2: #1b4d34;
+  --gold: #d4af37;
+  --gold2: #f2d675;
+  --cream: #f7f3e8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
-  background: radial-gradient(
-    circle at top,
-    #1b4d34 0%,
-    #0d2419 70%
-  );
+  background:
+    radial-gradient(
+      circle at top,
+      #1b4d34 0%,
+      #0d2419 70%
+    );
 }
+
+/* =========================================================
+   STICKY BANNER
+========================================================= */
+
+.banner-shell {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: .65rem .75rem .7rem;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(212,175,55,.35);
+  box-shadow: 0 8px 25px rgba(0,0,0,.16);
+}
+
+.banner-inner {
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.brand-logo {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brand-title {
+  color: var(--green);
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 1;
+  letter-spacing: .02em;
+}
+
+.brand-description {
+  color: rgba(18,53,36,.68);
+  font-size: .68rem;
+  line-height: 1.35;
+  margin-top: .25rem;
+  max-width: 680px;
+}
+
+.banner-bottom {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-top: .65rem;
+}
+
+.modern-tabs {
+  display: flex;
+  flex: 1;
+  gap: .25rem;
+  padding: .25rem;
+  background: #eef1ec;
+  border: 1px solid rgba(18,53,36,.10);
+  border-radius: 999px;
+}
+
+.nav-tab {
+  flex: 1;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--green);
+  padding: .55rem .7rem;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background .2s ease,
+    color .2s ease,
+    transform .2s ease,
+    box-shadow .2s ease;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  background: rgba(212,175,55,.22);
+}
+
+.nav-tab.tab-active {
+  background: var(--green);
+  color: white;
+  box-shadow: 0 3px 9px rgba(18,53,36,.18);
+}
+
+.banner-music {
+  flex-shrink: 0;
+  border: 1px solid rgba(18,53,36,.16);
+  background: white;
+  color: var(--green);
+  border-radius: 999px;
+  padding: .58rem .85rem;
+  font-weight: 700;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.banner-music:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+@media (max-width: 700px) {
+  .banner-shell {
+    padding: .5rem .55rem .55rem;
+  }
+
+  .brand-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-description {
+    font-size: .61rem;
+  }
+
+  .banner-bottom {
+    align-items: stretch;
+  }
+
+  .modern-tabs {
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    font-size: .7rem;
+    padding: .5rem .55rem;
+  }
+
+  .banner-music {
+    font-size: .68rem;
+    padding: .5rem .65rem;
+  }
+}
+
+/* =========================================================
+   GENERAL
+========================================================= */
 
 .gold-border {
   border: 1px solid rgba(212,175,55,.4);
@@ -58,14 +221,23 @@ body {
 
 .chart-wrap {
   position: relative;
-  height: 360px;
+  height: 390px;
   width: 100%;
 }
 
 .overview-chart-wrap {
   position: relative;
-  height: 420px;
+  height: 440px;
   width: 100%;
+}
+
+.chart-empty {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(247,243,232,.5);
 }
 
 .day-checks {
@@ -94,6 +266,52 @@ body {
   accent-color: #d4af37;
 }
 
+/* =========================================================
+   SLIDER
+========================================================= */
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      #c73e3e 0%,
+      #e67e22 32%,
+      #f2d675 55%,
+      #78a85b 75%,
+      #3f8d59 100%
+    );
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 3px solid #123524;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,.25);
+}
+
+input[type=range]::-moz-range-thumb {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 3px solid #123524;
+  cursor: pointer;
+}
+
+/* =========================================================
+   LEAFLET
+========================================================= */
+
 .leaflet-popup-content-wrapper {
   background: #123524;
   color: #f7f3e8;
@@ -102,35 +320,6 @@ body {
 
 .leaflet-popup-tip {
   background: #123524;
-}
-
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #d4af37;
-  border: 2px solid #123524;
-  cursor: pointer;
-  margin-top: -8px;
-}
-
-input[type=range] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 4px;
-  background: #3a6b4f;
-}
-
-input[type=range]::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #d4af37;
-  border: 2px solid #123524;
-  cursor: pointer;
 }
 
 ::-webkit-scrollbar {
@@ -143,125 +332,133 @@ input[type=range]::-moz-range-thumb {
   border-radius: 4px;
 }
 
-.tab-active {
-  background: #d4af37;
-  color: #123524;
+.download-icon {
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
-.nav-tab {
-  white-space: nowrap;
+.summary-highlight {
+  color: #f2d675;
+  font-weight: 700;
 }
 
-.nav-tab:hover {
-  background: #d4af37;
-  color: #123524;
-}
-
-.chart-empty {
-  height: 100%;
+.legend-chips {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: rgba(247,243,232,.5);
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .7rem;
 }
 
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  font-size: .7rem;
+  background: rgba(18,53,36,.8);
+  color: #f7f3e8;
+  border: 1px solid rgba(212,175,55,.18);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 </style>
 </head>
 
-
 <body class="min-h-screen text-eft-cream font-sans pb-10">
 
-
 <!-- =========================================================
-     HEADER
+     STICKY BANNER
 ========================================================= -->
 
-<header class="px-4 pt-5 pb-4">
+<header class="banner-shell">
 
-  <div class="max-w-6xl mx-auto">
+  <div class="banner-inner">
 
-    <!-- =====================================================
-         LOGO + TITEL
-    ====================================================== -->
+    <div class="brand-row">
 
-    <div class="flex items-center gap-5">
-
-      <!-- LOGO -->
       <img
         src="logo.png"
         alt="Logo De Ouderbatterij"
-        class="w-24 h-24 sm:w-28 sm:h-28 object-contain flex-shrink-0"
+        class="brand-logo"
       >
 
-      <!-- TITEL + OMSCHRIJVING -->
       <div class="min-w-0">
 
-        <h1
-          class="font-display text-3xl sm:text-4xl font-bold text-eft-gold tracking-wide"
-        >
+        <div class="brand-title">
           De Ouderbatterij
-        </h1>
+        </div>
 
-        <p class="text-eft-cream/70 mt-1 text-sm sm:text-base max-w-3xl">
+        <div class="brand-description">
           Geeft inzicht in hoeveel energie een moment gekost (of gegeven) heeft tijdens jouw Efteling uitje.
-        </p>
+        </div>
 
       </div>
 
     </div>
 
+    <div class="banner-bottom">
 
-    <!-- =====================================================
-         NAVIGATIE / TABBLADEN
-    ====================================================== -->
-
-    <nav
-      class="mt-5 flex w-full bg-eft-green/60 gold-border rounded-xl p-1 shadow-xl"
-      aria-label="Navigatie"
-    >
-
-      <!-- VANDAAG -->
-      <button
-        id="viewTodayBtn"
-        class="nav-tab flex-1 px-3 py-3 rounded-lg text-sm sm:text-base font-semibold text-center"
+      <nav
+        class="modern-tabs"
+        aria-label="Navigatie"
       >
-        🏰 Vandaag
+
+        <button
+          id="viewTodayBtn"
+          class="nav-tab tab-active"
+          type="button"
+        >
+          🏰 Vandaag
+        </button>
+
+        <button
+          id="viewHistoryBtn"
+          class="nav-tab"
+          type="button"
+        >
+          📚 Geschiedenis
+        </button>
+
+        <button
+          id="viewMultiBtn"
+          class="nav-tab"
+          type="button"
+        >
+          📈 Meerdere dagen
+        </button>
+
+      </nav>
+
+      <button
+        id="musicBtn"
+        class="banner-music"
+        type="button"
+      >
+        🔊 Muziek aan
       </button>
 
-
-      <!-- GESCHIEDENIS -->
-      <button
-        id="viewHistoryBtn"
-        class="nav-tab flex-1 px-3 py-3 rounded-lg text-sm sm:text-base font-semibold text-center"
-      >
-        📚 Geschiedenis
-      </button>
-
-
-      <!-- MEERDERE DAGEN -->
-      <button
-        id="viewMultiBtn"
-        class="nav-tab flex-1 px-3 py-3 rounded-lg text-sm sm:text-base font-semibold text-center"
-      >
-        📈 Meerdere dagen
-      </button>
-
-    </nav>
+    </div>
 
   </div>
 
 </header>
 
-
-<main class="max-w-6xl mx-auto px-4 space-y-5">
-
+<main class="max-w-6xl mx-auto px-4 pt-5 space-y-5">
 
 <!-- =========================================================
      GESCHIEDENIS
 ========================================================= -->
 
-<div id="historyView" class="hidden space-y-5">
+<div
+  id="historyView"
+  class="hidden space-y-5"
+>
 
   <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
 
@@ -286,12 +483,10 @@ input[type=range]::-moz-range-thumb {
 
     </div>
 
-
     <div
       id="historyList"
       class="space-y-3"
     ></div>
-
 
     <p
       id="historyEmpty"
@@ -305,13 +500,14 @@ input[type=range]::-moz-range-thumb {
 </div>
 
 
-
 <!-- =========================================================
      DAGWEERGAVE
 ========================================================= -->
 
-<div id="dashboardView" class="space-y-5">
-
+<div
+  id="dashboardView"
+  class="space-y-5"
+>
 
 <!-- =========================================================
      KAART
@@ -333,41 +529,17 @@ input[type=range]::-moz-range-thumb {
 
     </div>
 
-
-    <div class="flex flex-wrap gap-2">
-
-      <button
-        id="locateBtn"
-        class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition"
-      >
-        📍 Mijn locatie
-      </button>
-
-
-      <button
-        id="musicBtn"
-        class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
-      >
-        🔊 Muziek aan
-      </button>
-
-
-      <a
-        id="sunoLink"
-        href="https://suno.com/song/0d769865-fc65-4294-b673-ec42d2c9cbca?sh=6JGMz8S4RnPbp0bZ"
-        target="_blank"
-        rel="noopener"
-        class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
-      >
-        🎵 Open Ouderbatterij
-      </a>
-
-    </div>
+    <button
+      id="locateBtn"
+      type="button"
+      class="bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg shadow transition"
+    >
+      📍 Mijn locatie
+    </button>
 
   </div>
 
-
-  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+  <div class="grid sm:grid-cols-2 gap-2 mb-3">
 
     <label class="text-xs text-eft-cream/70">
 
@@ -377,18 +549,15 @@ input[type=range]::-moz-range-thumb {
         id="mapCategory"
         class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
       >
-
         <option value="alle">Alles</option>
         <option value="attractie">🎢 Attracties</option>
         <option value="restaurant">🍴 Restaurants</option>
         <option value="show">🎭 Parkshows</option>
         <option value="souvenir">🛍️ Souvenirs</option>
         <option value="rijk">🏰 Rijken</option>
-
       </select>
 
     </label>
-
 
     <label class="text-xs text-eft-cream/70">
 
@@ -398,44 +567,30 @@ input[type=range]::-moz-range-thumb {
         id="mapRealm"
         class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
       >
-
         <option value="alle">Alle rijken</option>
         <option>Marerijk</option>
         <option>Reizenrijk</option>
         <option>Ruigrijk</option>
         <option>Anderrijk</option>
         <option>Fantasierijk</option>
-
       </select>
 
     </label>
 
   </div>
 
-
   <div id="map"></div>
-
 
   <p
     id="locStatus"
     class="text-xs text-eft-cream/60 mt-2"
   ></p>
 
-
-  <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-
-    <span
-      id="musicStatus"
-      class="text-eft-cream/50"
-    >
-      🎵 Ouderbatterij staat klaar als achtergrondmuziek.
-      Klik op “Muziek aan” om te starten.
-    </span>
-
+  <div class="mt-3 text-xs text-eft-cream/50">
+    🎵 Gebruik de muziekknop rechtsboven in de banner om de achtergrondmuziek aan of uit te zetten.
   </div>
 
 </section>
-
 
 
 <!-- =========================================================
@@ -459,7 +614,6 @@ input[type=range]::-moz-range-thumb {
 
     </div>
 
-
     <a
       href="https://www.efteling.com/nl/park/plattegrond"
       target="_blank"
@@ -474,7 +628,6 @@ input[type=range]::-moz-range-thumb {
 
   <div class="grid sm:grid-cols-2 gap-4 mt-4">
 
-
     <div>
 
       <label class="block text-sm mb-1 text-eft-cream/80">
@@ -485,39 +638,11 @@ input[type=range]::-moz-range-thumb {
         id="categorySelect"
         class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
       >
-
         <option value="attractie">🎢 Attractie</option>
         <option value="restaurant">🍴 Restaurant</option>
         <option value="show">🎭 Parkshow</option>
         <option value="souvenir">🛍️ Souvenirwinkel</option>
         <option value="overig">✍️ Overig</option>
-
-      </select>
-
-    </div>
-
-
-    <div>
-
-      <label class="block text-sm mb-1 text-eft-cream/80">
-        Rijk
-      </label>
-
-      <select
-        id="realmSelect"
-        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
-      >
-
-        <option value="">
-          Onbekend / niet van toepassing
-        </option>
-
-        <option>Marerijk</option>
-        <option>Reizenrijk</option>
-        <option>Ruigrijk</option>
-        <option>Anderrijk</option>
-        <option>Fantasierijk</option>
-
       </select>
 
     </div>
@@ -533,7 +658,6 @@ input[type=range]::-moz-range-thumb {
         id="placeSelect"
         class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
       ></select>
-
 
       <input
         id="customPlace"
@@ -556,7 +680,6 @@ input[type=range]::-moz-range-thumb {
         </span>
 
       </label>
-
 
       <input
         id="dateTimeInput"
@@ -585,7 +708,6 @@ input[type=range]::-moz-range-thumb {
 
       </label>
 
-
       <input
         id="scoreSlider"
         type="range"
@@ -595,13 +717,10 @@ input[type=range]::-moz-range-thumb {
         class="w-full mt-2"
       >
 
-
       <div class="flex justify-between text-xs text-eft-cream/50 mt-1">
-
         <span>😵 Leeg</span>
         <span>🙂 Prima</span>
         <span>🔋 Volle batterij</span>
-
       </div>
 
     </div>
@@ -611,11 +730,11 @@ input[type=range]::-moz-range-thumb {
 
   <button
     id="saveBtn"
+    type="button"
     class="mt-5 w-full sm:w-auto bg-eft-gold hover:bg-eft-gold2 text-eft-green font-bold px-6 py-2.5 rounded-lg shadow transition"
   >
     💾 Bezoek opslaan
   </button>
-
 
   <span
     id="savedMsg"
@@ -625,7 +744,6 @@ input[type=range]::-moz-range-thumb {
   </span>
 
 </section>
-
 
 
 <!-- =========================================================
@@ -652,12 +770,13 @@ input[type=range]::-moz-range-thumb {
 
     </div>
 
-
     <button
-      id="clearDayBtn"
-      class="text-xs text-eft-cream/50 hover:text-red-300 underline"
+      id="downloadCsvBtn"
+      type="button"
+      title="Download de geregistreerde momenten als CSV"
+      class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
     >
-      Deze dag wissen
+      ↓ CSV
     </button>
 
   </div>
@@ -693,11 +812,9 @@ input[type=range]::-moz-range-thumb {
 
       </thead>
 
-
       <tbody id="historyBody"></tbody>
 
     </table>
-
 
     <p
       id="emptyMsg"
@@ -711,14 +828,13 @@ input[type=range]::-moz-range-thumb {
 </section>
 
 
-
 <!-- =========================================================
-     SCOREVERLOOP VAN ÉÉN DAG
+     SCOREVERLOOP
 ========================================================= -->
 
 <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
 
-  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+  <div class="flex flex-wrap items-center justify-between gap-2">
 
     <div>
 
@@ -727,22 +843,63 @@ input[type=range]::-moz-range-thumb {
       </h2>
 
       <p class="text-xs text-eft-cream/55">
-        Tijd op de x-as, score op de y-as.
-        De naam van de attractie of activiteit staat naast ieder meetpunt.
+        Tijd op de x-as, batterijscore op de y-as.
+        De naam van ieder moment staat naast het meetpunt.
       </p>
 
     </div>
 
+    <div class="flex flex-wrap gap-2">
 
-    <button
-      id="downloadChartBtn"
-      class="bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream font-semibold px-3 py-2 rounded-lg shadow transition"
-    >
-      ⬇️ Plot downloaden
-    </button>
+      <button
+        id="categoryColorBtn"
+        type="button"
+        class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+      >
+        🎨 Categorie-kleuren: uit
+      </button>
+
+      <button
+        id="downloadChartBtn"
+        type="button"
+        title="Grafiek downloaden"
+        class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+      >
+        ↓
+      </button>
+
+    </div>
 
   </div>
 
+  <div class="legend-chips">
+
+    <span class="legend-chip">
+      <span class="legend-dot" style="background:#d4af37"></span>
+      Attractie
+    </span>
+
+    <span class="legend-chip">
+      <span class="legend-dot" style="background:#e2725b"></span>
+      Restaurant
+    </span>
+
+    <span class="legend-chip">
+      <span class="legend-dot" style="background:#7c83fd"></span>
+      Parkshow
+    </span>
+
+    <span class="legend-chip">
+      <span class="legend-dot" style="background:#d06adf"></span>
+      Souvenir
+    </span>
+
+    <span class="legend-chip">
+      <span class="legend-dot" style="background:#9aa0a6"></span>
+      Overig
+    </span>
+
+  </div>
 
   <div
     id="scoreChartEmpty"
@@ -751,14 +908,11 @@ input[type=range]::-moz-range-thumb {
     Nog geen meetpunten op deze dag.
   </div>
 
-
   <div
     id="scoreChartContainer"
-    class="chart-wrap"
+    class="chart-wrap mt-2"
   >
-
     <canvas id="scoreChart"></canvas>
-
   </div>
 
 </section>
@@ -766,12 +920,14 @@ input[type=range]::-moz-range-thumb {
 </div>
 
 
-
 <!-- =========================================================
      MEERDERE DAGEN
 ========================================================= -->
 
-<div id="multiView" class="hidden space-y-5">
+<div
+  id="multiView"
+  class="hidden space-y-5"
+>
 
 <section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
 
@@ -784,36 +940,37 @@ input[type=range]::-moz-range-thumb {
       </h2>
 
       <p class="text-xs text-eft-cream/55">
-        De x-as gebruikt de volledige datum én tijd.
-        Daardoor staan meerdere dagen op één echte tijdlijn.
+        Alleen daadwerkelijk geregistreerde momenten worden op de x-as getoond.
+        Elk moment toont dag en tijd.
       </p>
 
     </div>
-
 
     <div class="flex flex-wrap gap-2">
 
       <button
         id="selectAllDaysBtn"
+        type="button"
         class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
       >
         Alles
       </button>
 
-
       <button
         id="selectNoDaysBtn"
+        type="button"
         class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
       >
         Geen
       </button>
 
-
       <button
         id="downloadOverviewChartBtn"
+        type="button"
+        title="Meerdaagse grafiek downloaden"
         class="text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
       >
-        ⬇️ Download
+        ↓
       </button>
 
     </div>
@@ -834,14 +991,11 @@ input[type=range]::-moz-range-thumb {
     Selecteer minimaal één bezoekdag met meetpunten.
   </div>
 
-
   <div
     id="overviewChartContainer"
     class="overview-chart-wrap"
   >
-
     <canvas id="overviewChart"></canvas>
-
   </div>
 
 </section>
@@ -851,13 +1005,9 @@ input[type=range]::-moz-range-thumb {
 </main>
 
 
-
 <footer class="max-w-6xl mx-auto px-4 pt-8 text-center text-xs text-eft-cream/50">
-
   Deze tool is gebouwd met AI² (Anika & Artificiële intelligentie)
-
 </footer>
-
 
 
 <audio
@@ -868,7 +1018,6 @@ input[type=range]::-moz-range-thumb {
 ></audio>
 
 
-
 <script>
 
 /* =========================================================
@@ -876,6 +1025,8 @@ input[type=range]::-moz-range-thumb {
 ========================================================= */
 
 const POIS = [
+
+  /* ATTRACTIES */
 
   {name:"Danse Macabre",type:"attractie",realm:"Ruigrijk",lat:51.64791,lng:5.05088},
   {name:"Baron 1898",type:"attractie",realm:"Ruigrijk",lat:51.64876,lng:5.04594},
@@ -918,6 +1069,8 @@ const POIS = [
   {name:"Nest!",type:"attractie",realm:"Reizenrijk",lat:51.65170,lng:5.05100},
   {name:"Stoomtrein",type:"attractie",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
 
+  /* RESTAURANTS */
+
   {name:"Polles Keuken",type:"restaurant",realm:"Fantasierijk",lat:51.65000,lng:5.05000},
   {name:"Pinokkio's pizza & pasta restaurant",type:"restaurant",realm:"Marerijk",lat:51.64780,lng:5.04350},
   {name:"In den Swarte Kat",type:"restaurant",realm:"Marerijk",lat:51.64850,lng:5.04980},
@@ -938,6 +1091,8 @@ const POIS = [
   {name:"Toko Pagode",type:"restaurant",realm:"Fantasierijk",lat:51.65280,lng:5.05180},
   {name:"Station de Oost",type:"restaurant",realm:"Reizenrijk",lat:51.65100,lng:5.05250},
 
+  /* SHOWS */
+
   {name:"Magicaluna",type:"show",realm:"Reizenrijk",lat:51.65180,lng:5.05200},
   {name:"Aquanura",type:"show",realm:"Ruigrijk",lat:51.64800,lng:5.04750},
   {name:"Ontmoet & begroet Efteling-bewoners",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04700},
@@ -948,6 +1103,8 @@ const POIS = [
   {name:"De Huyveraars",type:"show",realm:"Ruigrijk",lat:51.64810,lng:5.05080},
   {name:"Sprookjessprokkelaar",type:"show",realm:"Marerijk",lat:51.64900,lng:5.04600},
   {name:"Bakker Krümel en Frau Schmetterling",type:"show",realm:"Marerijk",lat:51.64710,lng:5.04620},
+
+  /* SOUVENIRS */
 
   {name:"Efteldingen",type:"souvenir",realm:"Marerijk",lat:51.64930,lng:5.04600},
   {name:"Arcadeau",type:"souvenir",realm:"Marerijk",lat:51.65010,lng:5.04570},
@@ -966,514 +1123,310 @@ const POIS = [
 ];
 
 
+/* =========================================================
+   RIJKEN
+========================================================= */
+
 const REALMS = [
-  {name:"Marerijk",lat:51.64905,lng:5.04705},
-  {name:"Reizenrijk",lat:51.65200,lng:5.05170},
-  {name:"Ruigrijk",lat:51.64780,lng:5.04700},
-  {name:"Anderrijk",lat:51.64955,lng:5.04980},
-  {name:"Fantasierijk",lat:51.65055,lng:5.05035}
+  {
+    name:"Marerijk",
+    lat:51.64905,
+    lng:5.04705
+  },
+  {
+    name:"Reizenrijk",
+    lat:51.65200,
+    lng:5.05170
+  },
+  {
+    name:"Ruigrijk",
+    lat:51.64780,
+    lng:5.04700
+  },
+  {
+    name:"Anderrijk",
+    lat:51.64955,
+    lng:5.04980
+  },
+  {
+    name:"Fantasierijk",
+    lat:51.65055,
+    lng:5.05035
+  }
 ];
 
 
-const TYPE_LABEL = {
-  attractie:"🎢 Attractie",
-  restaurant:"🍴 Restaurant",
-  show:"🎭 Parkshow",
-  souvenir:"🛍️ Souvenir",
-  overig:"✍️ Overig"
-};
-
+/* =========================================================
+   CONSTANTEN
+========================================================= */
 
 const STORAGE_KEY = "ouderbatterij_v3";
 
-
-/* =========================================================
-   KAART
-========================================================= */
-
-const map = L.map('map')
-  .setView([51.6495,5.0485],16);
-
-
-L.tileLayer(
-  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {
-    attribution:'&copy; OpenStreetMap contributors',
-    maxZoom:19
-  }
-).addTo(map);
-
-
-function iconFor(type) {
-
-  const bg = {
-    attractie:'#d4af37',
-    restaurant:'#e2725b',
-    show:'#7c83fd',
-    souvenir:'#d06adf',
-    rijk:'#55a36f'
-  }[type] || '#d4af37';
-
-
-  const shape =
-    type === 'restaurant'
-      ? 'border-radius:4px'
-      : type === 'show'
-        ? 'border-radius:50%'
-        : type === 'souvenir'
-          ? 'border-radius:2px;transform:rotate(45deg)'
-          : 'border-radius:50%';
-
-
-  return L.divIcon({
-
-    html:`
-      <div style="
-        background:${bg};
-        width:15px;
-        height:15px;
-        border:2px solid #123524;
-        box-shadow:0 0 4px rgba(0,0,0,.5);
-        ${shape}
-      "></div>
-    `,
-
-    className:'',
-    iconSize:[15,15],
-    iconAnchor:[7,7]
-
-  });
-
-}
-
-
-const markers = [];
-
-
-function popupFor(p) {
-
-  return `
-    <b>${TYPE_LABEL[p.type] || '🏰'} ${p.name}</b>
-    <br>
-    <span style="opacity:.75">
-      ${p.realm || ''}
-    </span>
-  `;
-
-}
-
-
-POIS.forEach(p => {
-
-  const marker =
-    L.marker(
-      [p.lat,p.lng],
-      {
-        icon:iconFor(p.type)
-      }
-    )
-    .addTo(map)
-    .bindPopup(
-      popupFor(p)
-    );
-
-
-  marker.on(
-    'click',
-    () => selectPlaceFromMap(p)
-  );
-
-
-  markers.push({
-    obj:marker,
-    data:p
-  });
-
-});
-
-
-REALMS.forEach(r => {
-
-  const marker =
-    L.marker(
-      [r.lat,r.lng],
-      {
-        icon:iconFor('rijk')
-      }
-    )
-    .addTo(map)
-    .bindPopup(
-      `<b>🏰 ${r.name}</b><br>
-       <span style="opacity:.75">Rijk</span>`
-    );
-
-
-  markers.push({
-    obj:marker,
-    data:{
-      ...r,
-      type:'rijk'
-    }
-  });
-
-});
-
-
-function filterMap() {
-
-  const category =
-    document.getElementById(
-      'mapCategory'
-    ).value;
-
-
-  const realm =
-    document.getElementById(
-      'mapRealm'
-    ).value;
-
-
-  markers.forEach(item => {
-
-    const visible =
-      (category === 'alle' ||
-       item.data.type === category) &&
-
-      (realm === 'alle' ||
-       item.data.realm === realm);
-
-
-    if (
-      visible &&
-      !map.hasLayer(item.obj)
-    ) {
-      item.obj.addTo(map);
-    }
-
-
-    if (
-      !visible &&
-      map.hasLayer(item.obj)
-    ) {
-      map.removeLayer(item.obj);
-    }
-
-  });
-
-}
-
-
-document
-  .getElementById('mapCategory')
-  .addEventListener(
-    'change',
-    filterMap
-  );
-
-
-document
-  .getElementById('mapRealm')
-  .addEventListener(
-    'change',
-    filterMap
-  );
-
-
-/* =========================================================
-   FORMULIER
-========================================================= */
-
-const categorySelect =
-  document.getElementById(
-    'categorySelect'
-  );
-
-
-const realmSelect =
-  document.getElementById(
-    'realmSelect'
-  );
-
-
-const placeSelect =
-  document.getElementById(
-    'placeSelect'
-  );
-
-
-const customPlace =
-  document.getElementById(
-    'customPlace'
-  );
-
-
-function populatePlaces() {
-
-  const type =
-    categorySelect.value;
-
-
-  placeSelect.innerHTML = '';
-
-
-  const list =
-    POIS
-      .filter(
-        p => p.type === type
-      )
-      .sort(
-        (a,b) =>
-          a.name.localeCompare(
-            b.name,
-            'nl'
-          )
-      );
-
-
-  list.forEach(p => {
-
-    const option =
-      document.createElement(
-        'option'
-      );
-
-
-    option.value =
-      p.name;
-
-
-    option.textContent =
-      p.name;
-
-
-    placeSelect.appendChild(
-      option
-    );
-
-  });
-
-
-  const free =
-    document.createElement(
-      'option'
-    );
-
-
-  free.value =
-    '__custom__';
-
-
-  free.textContent =
-    '✍️ Vrije tekst...';
-
-
-  placeSelect.appendChild(
-    free
-  );
-
-
-  customPlace.classList.toggle(
-    'hidden',
-    placeSelect.value !== '__custom__'
-  );
-
-}
-
-
-categorySelect.addEventListener(
-  'change',
-  populatePlaces
-);
-
-
-placeSelect.addEventListener(
-  'change',
-  () => {
-
-    customPlace.classList.toggle(
-      'hidden',
-      placeSelect.value !== '__custom__'
-    );
-
-  }
-);
-
-
-populatePlaces();
-
-
-function selectPlaceFromMap(p) {
-
-  categorySelect.value =
-    p.type;
-
-
-  realmSelect.value =
-    p.realm || '';
-
-
-  populatePlaces();
-
-
-  placeSelect.value =
-    p.name;
-
-
-  customPlace.classList.add(
-    'hidden'
-  );
-
-
-  document.getElementById(
-    'locStatus'
-  ).textContent =
-    `🖱️ "${p.name}" geselecteerd via de kaart.`;
-
-}
-
-
-/* =========================================================
-   DATUM EN TIJD
-========================================================= */
-
-function todayKey() {
-
-  const d =
-    new Date();
-
-
-  return [
-    d.getFullYear(),
-    String(
-      d.getMonth()+1
-    ).padStart(2,'0'),
-    String(
-      d.getDate()
-    ).padStart(2,'0')
-  ].join('-');
-
-}
-
-
-function fmtDate(key) {
-
-  return new Date(
-    key + 'T12:00:00'
-  ).toLocaleDateString(
-    'nl-NL',
-    {
-      weekday:'short',
-      day:'2-digit',
-      month:'2-digit',
-      year:'numeric'
-    }
-  );
-
-}
-
-
-function nowLocalISO() {
-
-  const d =
-    new Date();
-
-
-  const pad =
-    n => String(n).padStart(2,'0');
-
-
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-}
-
-
-function refreshDateTimeInput() {
-
-  const input =
-    document.getElementById(
-      'dateTimeInput'
-    );
-
-
-  if (input) {
-    input.value =
-      nowLocalISO();
-  }
-
-}
-
-
-refreshDateTimeInput();
+const TYPE_LABELS = {
+  attractie: "🎢 Attractie",
+  restaurant: "🍴 Restaurant",
+  show: "🎭 Parkshow",
+  souvenir: "🛍️ Souvenir",
+  overig: "✍️ Overig"
+};
+
+const TYPE_COLORS = {
+  attractie: "#d4af37",
+  restaurant: "#e2725b",
+  show: "#7c83fd",
+  souvenir: "#d06adf",
+  overig: "#9aa0a6"
+};
 
 
 /* =========================================================
    STATE
 ========================================================= */
 
-let state =
-  JSON.parse(
-    localStorage.getItem(
-      STORAGE_KEY
-    ) || 'null'
-  )
-  ||
-  {
-    days:[todayKey()],
-    visits:[],
-    active:todayKey(),
-    overviewDays:[todayKey()]
-  };
+let state = {
+  days: [],
+  visits: [],
+  active: null,
+  overviewDays: []
+};
+
+let currentView = "today";
+let scoreChart = null;
+let overviewChart = null;
+let categoryColorsOn = false;
 
 
-const today =
-  todayKey();
+/* =========================================================
+   ELEMENTEN
+========================================================= */
+
+const categorySelect =
+  document.getElementById("categorySelect");
+
+const placeSelect =
+  document.getElementById("placeSelect");
+
+const customPlace =
+  document.getElementById("customPlace");
+
+const dateTimeInput =
+  document.getElementById("dateTimeInput");
+
+const scoreSlider =
+  document.getElementById("scoreSlider");
+
+const scoreValue =
+  document.getElementById("scoreValue");
+
+const backgroundMusic =
+  document.getElementById("backgroundMusic");
+
+const musicBtn =
+  document.getElementById("musicBtn");
 
 
-if (!Array.isArray(state.days)) {
-  state.days = [];
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function todayKey() {
+
+  const d = new Date();
+
+  const y =
+    d.getFullYear();
+
+  const m =
+    String(d.getMonth() + 1).padStart(2,"0");
+
+  const day =
+    String(d.getDate()).padStart(2,"0");
+
+  return `${y}-${m}-${day}`;
 }
 
 
-if (!state.days.includes(today)) {
-  state.days.unshift(today);
+function nowLocalISO() {
+
+  const d = new Date();
+
+  const offset =
+    d.getTimezoneOffset();
+
+  const local =
+    new Date(
+      d.getTime() - offset * 60000
+    );
+
+  return local
+    .toISOString()
+    .slice(0,16);
 }
 
 
-if (!Array.isArray(state.visits)) {
-  state.visits = [];
-}
+function fmtDate(day) {
 
+  if (!day) return "";
 
-if (!Array.isArray(state.overviewDays)) {
-  state.overviewDays = [];
-}
+  const d =
+    new Date(`${day}T12:00:00`);
 
-
-state.overviewDays =
-  state.overviewDays.filter(
-    day => state.days.includes(day)
+  return d.toLocaleDateString(
+    "nl-NL",
+    {
+      weekday:"short",
+      day:"2-digit",
+      month:"2-digit",
+      year:"numeric"
+    }
   );
-
-
-if (!state.overviewDays.length) {
-  state.overviewDays = [today];
 }
 
 
-/*
- * We zetten de actieve dag alleen op vandaag
- * bij het opstarten.
- *
- * Zodra vanuit Geschiedenis een andere dag
- * wordt gekozen, blijft die dag actief.
- */
+function fmtShortDate(day) {
 
-state.active =
-  today;
+  const d =
+    new Date(`${day}T12:00:00`);
+
+  return d.toLocaleDateString(
+    "nl-NL",
+    {
+      day:"2-digit",
+      month:"2-digit"
+    }
+  );
+}
 
 
-let currentView =
-  'today';
+function fmtTime(dateTime) {
+
+  const d =
+    new Date(dateTime);
+
+  return d.toLocaleTimeString(
+    "nl-NL",
+    {
+      hour:"2-digit",
+      minute:"2-digit"
+    }
+  );
+}
+
+
+function fmtFullDateTime(dateTime) {
+
+  const d =
+    new Date(dateTime);
+
+  return d.toLocaleString(
+    "nl-NL",
+    {
+      weekday:"short",
+      day:"2-digit",
+      month:"2-digit",
+      year:"numeric",
+      hour:"2-digit",
+      minute:"2-digit"
+    }
+  );
+}
+
+
+function dayVisits(day) {
+
+  return state.visits
+    .filter(v => v.day === day)
+    .sort(
+      (a,b) =>
+        new Date(a.dateTime) -
+        new Date(b.dateTime)
+    );
+}
+
+
+function sortedDays() {
+
+  const days =
+    new Set([
+      ...state.days,
+      ...state.visits.map(v => v.day)
+    ]);
+
+  return [...days].sort(
+    (a,b) =>
+      new Date(`${b}T12:00:00`) -
+      new Date(`${a}T12:00:00`)
+  );
+}
+
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+function loadState() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    if (!raw) {
+      return;
+    }
+
+    const parsed =
+      JSON.parse(raw);
+
+    if (
+      parsed &&
+      typeof parsed === "object"
+    ) {
+
+      state.days =
+        Array.isArray(parsed.days)
+          ? parsed.days
+          : [];
+
+      state.visits =
+        Array.isArray(parsed.visits)
+          ? parsed.visits
+          : [];
+
+      state.active =
+        parsed.active ||
+        todayKey();
+
+      state.overviewDays =
+        Array.isArray(parsed.overviewDays)
+          ? parsed.overviewDays
+          : [];
+
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Ouderbatterij kon opslag niet lezen:",
+      error
+    );
+
+  }
+
+}
 
 
 function saveState() {
@@ -1486,379 +1439,355 @@ function saveState() {
 }
 
 
-function dayVisits(day) {
+/* =========================================================
+   INIT STATE
+========================================================= */
 
-  return state.visits
-    .filter(
-      v => v.day === day
-    )
-    .sort(
-      (a,b) =>
-        new Date(a.dateTime) -
-        new Date(b.dateTime)
-    );
+loadState();
 
+if (!state.active) {
+  state.active = todayKey();
 }
 
-
-function sortedDays() {
-
-  return [
-    ...new Set(state.days)
-  ].sort(
-    (a,b) =>
-      b.localeCompare(a)
-  );
-
+if (!state.days.includes(todayKey())) {
+  state.days.push(todayKey());
 }
+
+state.visits =
+  state.visits.map(v => ({
+    ...v,
+    score: Number(v.score),
+    type: v.type || "overig",
+    realm: v.realm || ""
+  }));
+
+state.days = [
+  ...new Set([
+    ...state.days,
+    ...state.visits.map(v => v.day)
+  ])
+];
+
+if (!state.overviewDays.length) {
+  state.overviewDays = [...state.days];
+}
+
+saveState();
 
 
 /* =========================================================
-   NAVIGATIE
+   FORMULIER
 ========================================================= */
 
-function updateViewButtons() {
+function populatePlaceSelect() {
 
-  [
-    ['viewTodayBtn','today'],
-    ['viewHistoryBtn','history'],
-    ['viewMultiBtn','multi']
-  ]
-  .forEach(
-    ([id,view]) => {
+  const selectedType =
+    categorySelect.value;
 
-      const button =
-        document.getElementById(id);
+  placeSelect.innerHTML = "";
 
-
-      button.classList.toggle(
-        'tab-active',
-        currentView === view
+  const filtered =
+    POIS
+      .filter(
+        poi =>
+          poi.type === selectedType
+      )
+      .sort(
+        (a,b) =>
+          a.name.localeCompare(
+            b.name,
+            "nl"
+          )
       );
 
+  const placeholder =
+    document.createElement("option");
 
-      button.classList.toggle(
-        'bg-eft-green2',
-        currentView !== view
+  placeholder.value = "";
+
+  placeholder.textContent =
+    selectedType === "overig"
+      ? "Kies een plek of vrije tekst…"
+      : "Kies een plek…";
+
+  placeSelect.appendChild(
+    placeholder
+  );
+
+  filtered.forEach(poi => {
+
+    const option =
+      document.createElement("option");
+
+    option.value =
+      poi.name;
+
+    option.textContent =
+      poi.name;
+
+    option.dataset.realm =
+      poi.realm;
+
+    placeSelect.appendChild(
+      option
+    );
+
+  });
+
+  const custom =
+    document.createElement("option");
+
+  custom.value =
+    "__custom__";
+
+  custom.textContent =
+    "✍️ Vrije tekst…";
+
+  placeSelect.appendChild(custom);
+
+  customPlace.classList.add("hidden");
+  customPlace.value = "";
+
+}
+
+
+categorySelect.addEventListener(
+  "change",
+  populatePlaceSelect
+);
+
+
+placeSelect.addEventListener(
+  "change",
+  () => {
+
+    if (
+      placeSelect.value ===
+      "__custom__"
+    ) {
+
+      customPlace.classList.remove(
+        "hidden"
+      );
+
+      customPlace.focus();
+
+    } else {
+
+      customPlace.classList.add(
+        "hidden"
       );
 
     }
-  );
+
+  }
+);
+
+
+function refreshDateTimeInput() {
+
+  dateTimeInput.value =
+    nowLocalISO();
 
 }
 
 
-function setView(view) {
+scoreSlider.addEventListener(
+  "input",
+  () => {
 
-  currentView =
-    view;
-
-
-  document
-    .getElementById('dashboardView')
-    .classList.toggle(
-      'hidden',
-      view !== 'today'
-    );
-
-
-  document
-    .getElementById('historyView')
-    .classList.toggle(
-      'hidden',
-      view !== 'history'
-    );
-
-
-  document
-    .getElementById('multiView')
-    .classList.toggle(
-      'hidden',
-      view !== 'multi'
-    );
-
-
-  updateViewButtons();
-
-
-  /*
-   * BELANGRIJK:
-   * Wanneer de Vandaag-tab geopend wordt,
-   * wordt de grafiek opnieuw opgebouwd.
-   */
-
-  if (view === 'today') {
-    renderChart();
-  }
-
-
-  if (view === 'history') {
-    renderHistory();
-  }
-
-
-  if (view === 'multi') {
-
-    renderOverviewDayChecks();
-
-    renderOverviewChart();
+    scoreValue.textContent =
+      scoreSlider.value;
 
   }
-
-
-  window.scrollTo({
-    top:0,
-    behavior:'smooth'
-  });
-
-}
+);
 
 
 /* =========================================================
-   GESCHIEDENIS
+   KAART
 ========================================================= */
 
-function escapeHtml(value) {
-
-  return String(
-    value ?? ''
-  )
-  .replace(
-    /[&<>'"]/g,
-    c => ({
-      '&':'&amp;',
-      '<':'&lt;',
-      '>':'&gt;',
-      "'":'&#39;',
-      '"':'&quot;'
-    }[c])
+const map =
+  L.map("map", {
+    zoomControl: true
+  }).setView(
+    [51.6495,5.0485],
+    16
   );
+
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    attribution:
+      '&copy; OpenStreetMap contributors'
+  }
+).addTo(map);
+
+
+let markerLayer =
+  L.layerGroup().addTo(map);
+
+
+const markerColors = {
+  attractie: "#d4af37",
+  restaurant: "#e2725b",
+  show: "#7c83fd",
+  souvenir: "#d06adf",
+  rijk: "#55a36f",
+  overig: "#9aa0a6"
+};
+
+
+function makeMarkerIcon(type) {
+
+  const color =
+    markerColors[type] ||
+    markerColors.overig;
+
+  return L.divIcon({
+    className:"",
+    html:`
+      <div
+        style="
+          width:16px;
+          height:16px;
+          border-radius:50%;
+          background:${color};
+          border:2px solid #123524;
+          box-shadow:0 2px 5px rgba(0,0,0,.4);
+        "
+      ></div>
+    `,
+    iconSize:[16,16],
+    iconAnchor:[8,8]
+  });
 
 }
 
 
-function renderHistory() {
+function renderMap() {
 
-  const days =
-    sortedDays()
+  markerLayer.clearLayers();
+
+  const category =
+    document.getElementById(
+      "mapCategory"
+    ).value;
+
+  const realm =
+    document.getElementById(
+      "mapRealm"
+    ).value;
+
+
+  if (
+    category === "alle" ||
+    category === "rijk"
+  ) {
+
+    REALMS
       .filter(
-        day => day !== todayKey()
-      );
+        r =>
+          realm === "alle" ||
+          r.name === realm
+      )
+      .forEach(r => {
 
-
-  const list =
-    document.getElementById(
-      'historyList'
-    );
-
-
-  const empty =
-    document.getElementById(
-      'historyEmpty'
-    );
-
-
-  const count =
-    document.getElementById(
-      'historyCount'
-    );
-
-
-  list.innerHTML = '';
-
-
-  count.textContent =
-    `${days.length} eerder bezoek${days.length === 1 ? '' : 'en'}`;
-
-
-  empty.classList.toggle(
-    'hidden',
-    days.length > 0
-  );
-
-
-  days.forEach(day => {
-
-    const visits =
-      dayVisits(day);
-
-
-    const card =
-      document.createElement(
-        'div'
-      );
-
-
-    card.className =
-      'bg-eft-green2/70 rounded-xl p-4 gold-border';
-
-
-    const average =
-      visits.length
-
-        ?
-
-        Math.round(
-          visits.reduce(
-            (sum,v) =>
-              sum + Number(v.score || 0),
-            0
-          ) / visits.length
+        L.marker(
+          [r.lat,r.lng],
+          {
+            icon:
+              makeMarkerIcon("rijk")
+          }
         )
+        .addTo(markerLayer)
+        .bindPopup(`
+          <strong>🏰 ${escapeHtml(r.name)}</strong>
+          <br>
+          <small>Rijk</small>
+        `);
 
-        :
+      });
 
-        null;
-
-
-    const rows =
-      visits.map(v => {
-
-        const d =
-          new Date(v.dateTime);
-
-
-        return `
-          <tr class="border-t border-eft-gold/10">
-
-            <td class="py-2 pr-2 whitespace-nowrap">
-              ${d.toLocaleTimeString(
-                'nl-NL',
-                {
-                  hour:'2-digit',
-                  minute:'2-digit'
-                }
-              )}
-            </td>
-
-            <td class="py-2 pr-2">
-              ${TYPE_LABEL[v.type] || '✍️ Overig'}
-            </td>
-
-            <td class="py-2 pr-2">
-              ${escapeHtml(v.place)}
-            </td>
-
-            <td class="py-2 text-right font-bold text-eft-gold">
-              ${v.score}/100
-            </td>
-
-          </tr>
-        `;
-
-      }).join('');
+  }
 
 
-    card.innerHTML = `
-
-      <div class="flex flex-wrap items-center justify-between gap-3">
-
-        <div>
-
-          <h3 class="font-display text-lg text-eft-gold">
-            ${fmtDate(day)}
-          </h3>
-
-          <p class="text-xs text-eft-cream/55">
-            ${visits.length}
-            meetpunt${visits.length === 1 ? '' : 'en'}
-            · gemiddelde
-            ${average === null ? '—' : average + '/100'}
-          </p>
-
-        </div>
-
-
-        <button
-          class="view-history-day bg-eft-gold hover:bg-eft-gold2 text-eft-green font-semibold px-3 py-2 rounded-lg text-sm"
-          data-day="${day}"
-        >
-          Bekijk deze dag
-        </button>
-
-      </div>
-
-
-      <div class="overflow-x-auto mt-3">
-
-        ${
-          visits.length
-
-            ?
-
-            `
-            <table class="w-full text-sm">
-
-              <thead>
-
-                <tr class="text-eft-gold/70">
-
-                  <th class="text-left pb-1 pr-2">
-                    Tijd
-                  </th>
-
-                  <th class="text-left pb-1 pr-2">
-                    Categorie
-                  </th>
-
-                  <th class="text-left pb-1 pr-2">
-                    Meetpunt
-                  </th>
-
-                  <th class="text-right pb-1">
-                    Score
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-                ${rows}
-              </tbody>
-
-            </table>
-            `
-
-            :
-
-            `
-            <p class="text-sm text-eft-cream/50 py-2">
-              Geen meetpunten op deze dag.
-            </p>
-            `
-        }
-
-      </div>
-    `;
-
-
-    list.appendChild(card);
-
-  });
-
-
-  list
-    .querySelectorAll(
-      '.view-history-day'
+  POIS
+    .filter(
+      poi =>
+        (
+          category === "alle" ||
+          category === poi.type
+        ) &&
+        (
+          realm === "alle" ||
+          realm === poi.realm
+        )
     )
-    .forEach(button => {
+    .forEach(poi => {
 
-      button.addEventListener(
-        'click',
-        () => {
+      const marker =
+        L.marker(
+          [poi.lat,poi.lng],
+          {
+            icon:
+              makeMarkerIcon(
+                poi.type
+              )
+          }
+        )
+        .addTo(markerLayer);
 
-          state.active =
-            button.dataset.day;
+      marker.bindPopup(`
+        <strong>${escapeHtml(poi.name)}</strong>
+        <br>
+        <small>${escapeHtml(poi.realm)}</small>
+        <br><br>
+        <button
+          type="button"
+          data-map-place="${escapeHtml(poi.name)}"
+          style="
+            background:#d4af37;
+            color:#123524;
+            border:0;
+            border-radius:6px;
+            padding:5px 8px;
+            font-weight:700;
+            cursor:pointer;
+          "
+        >
+          Gebruik deze plek
+        </button>
+      `);
 
+      marker.on(
+        "popupopen",
+        event => {
 
-          saveState();
+          const popup =
+            event.popup
+              .getElement();
 
+          const button =
+            popup?.querySelector(
+              "[data-map-place]"
+            );
 
-          renderAll();
+          if (button) {
 
+            button.onclick =
+              () => {
 
-          setView('today');
+                selectPlaceFromMap(
+                  poi
+                );
+
+                map.closePopup();
+
+              };
+
+          }
 
         }
       );
@@ -1866,6 +1795,105 @@ function renderHistory() {
     });
 
 }
+
+
+function selectPlaceFromMap(poi) {
+
+  categorySelect.value =
+    poi.type;
+
+  populatePlaceSelect();
+
+  placeSelect.value =
+    poi.name;
+
+  customPlace.classList.add(
+    "hidden"
+  );
+
+}
+
+
+document
+  .getElementById("mapCategory")
+  .addEventListener(
+    "change",
+    renderMap
+  );
+
+document
+  .getElementById("mapRealm")
+  .addEventListener(
+    "change",
+    renderMap
+  );
+
+
+renderMap();
+
+
+/* =========================================================
+   LOCATIE
+========================================================= */
+
+document
+  .getElementById("locateBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      const status =
+        document.getElementById(
+          "locStatus"
+        );
+
+      if (!navigator.geolocation) {
+
+        status.textContent =
+          "📍 Locatie wordt niet ondersteund door deze browser.";
+
+        return;
+
+      }
+
+      status.textContent =
+        "📍 Locatie wordt opgehaald…";
+
+      navigator.geolocation.getCurrentPosition(
+
+        position => {
+
+          const latLng = [
+            position.coords.latitude,
+            position.coords.longitude
+          ];
+
+          L.marker(latLng)
+            .addTo(map)
+            .bindPopup("📍 Jij bent hier")
+            .openPopup();
+
+          map.setView(
+            latLng,
+            17
+          );
+
+          status.textContent =
+            "📍 Jouw locatie is op de kaart gezet.";
+
+        },
+
+        () => {
+
+          status.textContent =
+            "⚠️ Locatie kon niet worden opgehaald.";
+
+        }
+
+      );
+
+    }
+  );
 
 
 /* =========================================================
@@ -1877,148 +1905,171 @@ function renderDay() {
   const day =
     state.active;
 
-
   const visits =
     dayVisits(day);
 
-
-  document.getElementById(
-    'historyTitle'
-  ).textContent =
-    day === todayKey()
-      ? 'Vandaag'
-      : fmtDate(day);
-
-
-  document.getElementById(
-    'selectedDayLabel'
-  ).textContent =
-    'Actieve bezoekdag: ' +
-    (
-      day === todayKey()
-        ? 'Vandaag'
-        : fmtDate(day)
+  const title =
+    document.getElementById(
+      "historyTitle"
     );
 
+  const summary =
+    document.getElementById(
+      "daySummary"
+    );
 
-  document.getElementById(
-    'daySummary'
-  ).textContent =
-    visits.length
+  const selectedDayLabel =
+    document.getElementById(
+      "selectedDayLabel"
+    );
 
-      ?
+  title.textContent =
+    day === todayKey()
+      ? "Vandaag"
+      : fmtDate(day);
 
-      `${visits.length} geregistreerde momenten · gemiddelde score ${
-        Math.round(
-          visits.reduce(
-            (sum,v) =>
-              sum + Number(v.score || 0),
-            0
-          ) / visits.length
-        )
-      }/100`
+  selectedDayLabel.textContent =
+    `Actieve dag: ${
+      day === todayKey()
+        ? "vandaag"
+        : fmtDate(day)
+    }`;
 
-      :
+  if (!visits.length) {
 
-      'Nog geen momenten geregistreerd';
+    summary.textContent =
+      "Nog geen geregistreerde momenten.";
+
+  } else {
+
+    const average =
+      visits.reduce(
+        (sum,v) =>
+          sum + Number(v.score),
+        0
+      ) / visits.length;
+
+    summary.innerHTML =
+      `${visits.length} momenten geregistreerd, gemiddelde batterij is <span class="summary-highlight">${average.toFixed(0)}/100</span>.`;
+
+  }
 
 
   const body =
     document.getElementById(
-      'historyBody'
+      "historyBody"
     );
 
+  const empty =
+    document.getElementById(
+      "emptyMsg"
+    );
 
-  body.innerHTML = '';
+  body.innerHTML = "";
 
+  if (!visits.length) {
 
-  document.getElementById(
-    'emptyMsg'
-  ).classList.toggle(
-    'hidden',
-    visits.length > 0
+    empty.classList.remove(
+      "hidden"
+    );
+
+    return;
+
+  }
+
+  empty.classList.add(
+    "hidden"
   );
 
 
-  visits.forEach(v => {
+  visits.forEach(
+    visit => {
 
-    const tr =
-      document.createElement(
-        'tr'
-      );
+      const tr =
+        document.createElement("tr");
 
+      tr.className =
+        "border-b border-eft-gold/10";
 
-    tr.className =
-      'border-b border-eft-gold/10';
+      tr.innerHTML = `
 
+        <td class="py-2 pr-2 whitespace-nowrap">
+          ${escapeHtml(
+            TYPE_LABELS[visit.type] ||
+            TYPE_LABELS.overig
+          )}
+        </td>
 
-    const d =
-      new Date(v.dateTime);
+        <td class="py-2 pr-2">
+          ${escapeHtml(
+            visit.place
+          )}
+        </td>
 
+        <td class="py-2 pr-2 whitespace-nowrap">
+          ${fmtTime(
+            visit.dateTime
+          )}
+        </td>
 
-    tr.innerHTML = `
-
-      <td class="py-2 pr-2">
-        ${TYPE_LABEL[v.type] || '✍️ Overig'}
-      </td>
-
-      <td class="py-2 pr-2">
-        ${escapeHtml(v.place)}
-      </td>
-
-      <td class="py-2 pr-2 whitespace-nowrap">
-        ${d.toLocaleTimeString(
-          'nl-NL',
-          {
-            hour:'2-digit',
-            minute:'2-digit'
-          }
-        )}
-      </td>
-
-      <td class="py-2 pr-2 font-bold text-eft-gold">
-        ${v.score}/100
-      </td>
-
-      <td class="py-2 text-right">
-
-        <button
-          class="text-xs text-red-300 underline"
-          data-delete="${v.id}"
+        <td
+          class="py-2 pr-2 font-bold"
+          style="
+            color:${
+              TYPE_COLORS[
+                visit.type
+              ] || "#d4af37"
+            };
+          "
         >
-          wissen
-        </button>
+          ${Number(visit.score)}/100
+        </td>
 
-      </td>
+        <td class="py-2 text-right">
+          <button
+            type="button"
+            class="text-xs text-red-300 underline"
+            data-delete="${escapeHtml(
+              visit.id
+            )}"
+          >
+            wissen
+          </button>
+        </td>
 
-    `;
+      `;
 
+      body.appendChild(tr);
 
-    body.appendChild(tr);
-
-  });
+    }
+  );
 
 
   body
     .querySelectorAll(
-      '[data-delete]'
+      "[data-delete]"
     )
     .forEach(button => {
 
-      button.onclick =
+      button.addEventListener(
+        "click",
         () => {
+
+          const id =
+            button.dataset.delete;
 
           state.visits =
             state.visits.filter(
               v =>
-                v.id !==
-                button.dataset.delete
+                String(v.id) !==
+                String(id)
             );
 
-
+          saveState();
           renderAll();
 
-        };
+        }
+      );
 
     });
 
@@ -2026,77 +2077,19 @@ function renderDay() {
 
 
 /* =========================================================
-   CHART HELPERS
-========================================================= */
-
-function formatTodayTime(timestamp) {
-
-  return new Date(
-    Number(timestamp)
-  ).toLocaleTimeString(
-    'nl-NL',
-    {
-      hour:'2-digit',
-      minute:'2-digit'
-    }
-  );
-
-}
-
-
-function formatMultiDateTime(timestamp) {
-
-  return new Date(
-    Number(timestamp)
-  ).toLocaleString(
-    'nl-NL',
-    {
-      day:'2-digit',
-      month:'2-digit',
-      hour:'2-digit',
-      minute:'2-digit'
-    }
-  );
-
-}
-
-
-function formatFullDateTime(timestamp) {
-
-  return new Date(
-    Number(timestamp)
-  ).toLocaleString(
-    'nl-NL',
-    {
-      weekday:'short',
-      day:'2-digit',
-      month:'2-digit',
-      year:'numeric',
-      hour:'2-digit',
-      minute:'2-digit'
-    }
-  );
-
-}
-
-
-/* =========================================================
-   ATTRACTIENAMEN OP DE PUNTEN
+   CHART LABEL PLUGIN
 ========================================================= */
 
 const pointLabelsPlugin = {
 
-  id:'ouderbatterijPointLabels',
-
+  id:"ouderbatterijPointLabels",
 
   afterDatasetsDraw(chart) {
 
     const ctx =
       chart.ctx;
 
-
     ctx.save();
-
 
     chart.data.datasets.forEach(
       (dataset,datasetIndex) => {
@@ -2106,13 +2099,11 @@ const pointLabelsPlugin = {
             datasetIndex
           );
 
-
         meta.data.forEach(
           (point,index) => {
 
             const raw =
               dataset.data[index];
-
 
             if (
               !raw ||
@@ -2121,70 +2112,44 @@ const pointLabelsPlugin = {
               return;
             }
 
-
             let label =
               String(raw.place);
 
-
-            /*
-             * Lange namen worden ingekort.
-             * De volledige naam staat altijd in de tooltip.
-             */
-
-            if (label.length > 30) {
+            if (
+              label.length > 28
+            ) {
 
               label =
                 label.substring(
                   0,
-                  27
-                ) + '…';
+                  25
+                ) + "…";
 
             }
 
-
             ctx.font =
-              '600 11px Arial, sans-serif';
-
+              "600 11px Arial, sans-serif";
 
             const textWidth =
               ctx.measureText(
                 label
               ).width;
 
-
-            const padding =
-              4;
-
+            const padding = 4;
 
             const boxWidth =
               textWidth +
               padding * 2;
 
-
-            const boxHeight =
-              18;
-
-
-            /*
-             * Standaard rechtsboven van het punt.
-             */
+            const boxHeight = 18;
 
             let x =
               point.x + 8;
 
-
             let y =
-              point.y - 9;
+              point.y - 10;
 
-
-            let align =
-              'left';
-
-
-            /*
-             * Als het label rechts buiten de grafiek
-             * zou vallen, plaatsen we het links.
-             */
+            let align = "left";
 
             if (
               x + textWidth >
@@ -2192,19 +2157,12 @@ const pointLabelsPlugin = {
             ) {
 
               x =
-                point.x -
-                8;
+                point.x - 8;
 
               align =
-                'right';
+                "right";
 
             }
-
-
-            /*
-             * Als het label boven de grafiek komt,
-             * zetten we het onder het punt.
-             */
 
             if (
               y - boxHeight / 2 <
@@ -2212,25 +2170,21 @@ const pointLabelsPlugin = {
             ) {
 
               y =
-                point.y + 13;
+                point.y + 14;
 
             }
 
-
             const boxX =
-              align === 'right'
+              align === "right"
                 ? x - boxWidth + padding
                 : x - padding;
-
 
             const boxY =
               y -
               boxHeight / 2;
 
-
             ctx.fillStyle =
-              'rgba(18,53,36,.90)';
-
+              "rgba(18,53,36,.92)";
 
             ctx.fillRect(
               boxX,
@@ -2239,18 +2193,14 @@ const pointLabelsPlugin = {
               boxHeight
             );
 
-
             ctx.fillStyle =
-              '#f7f3e8';
-
+              "#f7f3e8";
 
             ctx.textAlign =
               align;
 
-
             ctx.textBaseline =
-              'middle';
-
+              "middle";
 
             ctx.fillText(
               label,
@@ -2264,13 +2214,11 @@ const pointLabelsPlugin = {
       }
     );
 
-
     ctx.restore();
 
   }
 
 };
-
 
 Chart.register(
   pointLabelsPlugin
@@ -2278,10 +2226,10 @@ Chart.register(
 
 
 /* =========================================================
-   CHART BASISOPTIES
+   CHART BASIS
 ========================================================= */
 
-function baseChartOptions() {
+function chartBaseOptions() {
 
   return {
 
@@ -2291,101 +2239,67 @@ function baseChartOptions() {
 
     animation:false,
 
-    scales: {
+    interaction:{
+      mode:"nearest",
+      intersect:false
+    },
 
-      y: {
+    scales:{
 
+      y:{
         min:0,
-
         max:100,
 
-        ticks: {
-
-          color:'#f7f3e8',
-
+        ticks:{
+          color:"#f7f3e8",
           stepSize:25
-
         },
 
-        grid: {
-
-          color:
-            'rgba(247,243,232,.10)'
-
+        grid:{
+          color:"rgba(247,243,232,.10)"
         },
 
-        border: {
-
-          color:
-            'rgba(247,243,232,.15)'
-
+        border:{
+          color:"rgba(247,243,232,.15)"
         },
 
-        title: {
-
+        title:{
           display:true,
-
-          text:'Score',
-
-          color:'#f7f3e8'
-
+          text:"Batterijscore",
+          color:"#f7f3e8"
         }
 
       },
 
-
-      x: {
-
-        type:'linear',
-
-        ticks: {
-
-          color:'#f7f3e8'
-
+      x:{
+        ticks:{
+          color:"#f7f3e8"
         },
 
-        grid: {
-
-          color:
-            'rgba(247,243,232,.07)'
-
+        grid:{
+          color:"rgba(247,243,232,.07)"
         },
 
-        border: {
-
-          color:
-            'rgba(247,243,232,.15)'
-
+        border:{
+          color:"rgba(247,243,232,.15)"
         }
 
       }
 
     },
 
+    plugins:{
 
-    plugins: {
-
-      legend: {
-
-        labels: {
-
-          color:'#f7f3e8',
-
-          boxWidth:12,
-
-          usePointStyle:true
-
-        }
-
+      legend:{
+        display:false
       },
 
-
-      tooltip: {
-
-        mode:'nearest',
-
-        intersect:false
-
+      tooltip:{
+        backgroundColor:"#123524",
+        titleColor:"#f2d675",
+        bodyColor:"#f7f3e8",
+        borderColor:"#d4af37",
+        borderWidth:1
       }
 
     }
@@ -2396,66 +2310,47 @@ function baseChartOptions() {
 
 
 /* =========================================================
-   SCOREVERLOOP VAN VANDAAG / ACTIEVE DAG
+   SCOREVERLOOP VAN ÉÉN DAG
 ========================================================= */
-
-let scoreChart =
-  null;
-
 
 function renderChart() {
 
   const canvas =
     document.getElementById(
-      'scoreChart'
+      "scoreChart"
     );
-
 
   const container =
     document.getElementById(
-      'scoreChartContainer'
+      "scoreChartContainer"
     );
-
 
   const empty =
     document.getElementById(
-      'scoreChartEmpty'
+      "scoreChartEmpty"
     );
-
-
-  /*
-   * Oude chart altijd eerst vernietigen.
-   */
 
   if (scoreChart) {
 
     scoreChart.destroy();
 
-    scoreChart =
-      null;
+    scoreChart = null;
 
   }
 
 
   const visits =
-    dayVisits(
-      state.active
-    );
+    dayVisits(state.active);
 
-
-  /*
-   * Geen meetpunten:
-   * duidelijke melding tonen.
-   */
 
   if (!visits.length) {
 
     container.classList.add(
-      'hidden'
+      "hidden"
     );
 
     empty.classList.remove(
-      'hidden'
+      "hidden"
     );
 
     return;
@@ -2464,31 +2359,13 @@ function renderChart() {
 
 
   container.classList.remove(
-    'hidden'
+    "hidden"
   );
-
 
   empty.classList.add(
-    'hidden'
+    "hidden"
   );
 
-
-  /*
-   * BELANGRIJK:
-   *
-   * We gebruiken hier een echte timestamp
-   * als x-waarde.
-   *
-   * Dus niet:
-   *
-   *     10:00 = 600
-   *
-   * maar:
-   *
-   *     24-09-2026 10:00 = echte datum/tijd
-   *
-   * Voor één dag geeft dit een echte tijd-as.
-   */
 
   const data =
     visits.map(
@@ -2518,47 +2395,50 @@ function renderChart() {
 
 
   const options =
-    baseChartOptions();
+    chartBaseOptions();
 
 
   options.scales.x = {
 
-    type:'linear',
+    type:"linear",
 
-    ticks: {
+    ticks:{
 
-      color:'#f7f3e8',
+      color:"#f7f3e8",
 
       maxTicksLimit:8,
 
-      callback:
-        value =>
-          formatTodayTime(value)
+      callback(value) {
+
+        const d =
+          new Date(
+            Number(value)
+          );
+
+        return d.toLocaleTimeString(
+          "nl-NL",
+          {
+            hour:"2-digit",
+            minute:"2-digit"
+          }
+        );
+
+      }
 
     },
 
-    grid: {
-
-      color:
-        'rgba(247,243,232,.07)'
-
+    grid:{
+      color:"rgba(247,243,232,.07)"
     },
 
-    border: {
-
-      color:
-        'rgba(247,243,232,.15)'
-
+    border:{
+      color:"rgba(247,243,232,.15)"
     },
 
-    title: {
-
+    title:{
       display:true,
-
-      text:'Tijd',
-
-      color:'#f7f3e8'
-
+      text:"Tijd",
+      color:"#f7f3e8"
     }
 
   };
@@ -2566,35 +2446,31 @@ function renderChart() {
 
   options.plugins.tooltip = {
 
-    mode:'nearest',
+    mode:"nearest",
 
     intersect:false,
 
-
-    callbacks: {
+    callbacks:{
 
       title(items) {
 
         if (!items.length) {
-          return '';
+          return "";
         }
 
-
-        return formatFullDateTime(
-          items[0].raw.x
+        return fmtFullDateTime(
+          items[0].raw.dateTime
         );
 
       },
-
 
       label(context) {
 
         const raw =
           context.raw;
 
-
         return [
-          `${raw.place}`,
+          raw.place,
           `Score: ${raw.y}/100`
         ];
 
@@ -2605,38 +2481,84 @@ function renderChart() {
   };
 
 
+  const pointColors =
+    data.map(
+      raw =>
+        categoryColorsOn
+          ? (
+              TYPE_COLORS[
+                raw.type
+              ] ||
+              "#9aa0a6"
+            )
+          : "#d4af37"
+    );
+
+
+  const borderColor =
+    "#d4af37";
+
+
   scoreChart =
     new Chart(
       canvas,
       {
 
-        type:'line',
+        type:"line",
 
-        data: {
+        data:{
 
-          datasets: [
+          datasets:[
 
             {
 
               label:
-                'Batterijscore',
+                "Batterijscore",
 
-              data:data,
-
-              /*
-               * De punten zijn meetpunten.
-               * Geen kunstmatige lijn tussen verschillende
-               * meetmomenten.
-               */
+              data,
 
               showLine:true,
-              tension:0.2,
+
+              tension:.18,
+
+              borderColor,
+
+              borderWidth:2,
 
               pointRadius:6,
 
               pointHoverRadius:9,
 
-              borderWidth:2
+              pointBackgroundColor:
+                pointColors,
+
+              pointBorderColor:
+                "#123524",
+
+              pointBorderWidth:2,
+
+              segment:{
+
+                borderColor:
+                  context => {
+
+                    if (
+                      !categoryColorsOn
+                    ) {
+                      return "#d4af37";
+                    }
+
+                    const type =
+                      context.p0?.raw?.type;
+
+                    return (
+                      TYPE_COLORS[type] ||
+                      "#9aa0a6"
+                    );
+
+                  }
+
+              }
 
             }
 
@@ -2644,7 +2566,7 @@ function renderChart() {
 
         },
 
-        options:options
+        options
 
       }
     );
@@ -2653,50 +2575,69 @@ function renderChart() {
 
 
 /* =========================================================
-   MEERDAGEN
+   CATEGORIE-KLEUREN
 ========================================================= */
 
-let overviewChart =
-  null;
+document
+  .getElementById(
+    "categoryColorBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
 
+      categoryColorsOn =
+        !categoryColorsOn;
+
+      document.getElementById(
+        "categoryColorBtn"
+      ).textContent =
+        categoryColorsOn
+          ? "🎨 Categorie-kleuren: aan"
+          : "🎨 Categorie-kleuren: uit";
+
+      renderChart();
+
+    }
+  );
+
+
+/* =========================================================
+   MEERDAGEN SELECTIE
+========================================================= */
 
 function renderOverviewDayChecks() {
 
   const wrap =
     document.getElementById(
-      'overviewDayChecks'
+      "overviewDayChecks"
     );
 
+  wrap.innerHTML = "";
 
-  wrap.innerHTML = '';
 
-
-  sortedDays()
-    .forEach(day => {
+  sortedDays().forEach(
+    day => {
 
       const label =
         document.createElement(
-          'label'
+          "label"
         );
 
-
       label.className =
-        'day-check text-xs';
+        "day-check text-xs";
 
 
       const input =
         document.createElement(
-          'input'
+          "input"
         );
 
-
       input.type =
-        'checkbox';
-
+        "checkbox";
 
       input.value =
         day;
-
 
       input.checked =
         state.overviewDays.includes(
@@ -2705,22 +2646,20 @@ function renderOverviewDayChecks() {
 
 
       input.addEventListener(
-        'change',
+        "change",
         () => {
 
           state.overviewDays =
             [
               ...wrap.querySelectorAll(
-                'input:checked'
+                "input:checked"
               )
             ].map(
               input =>
                 input.value
             );
 
-
           saveState();
-
 
           renderOverviewChart();
 
@@ -2730,13 +2669,12 @@ function renderOverviewDayChecks() {
 
       const span =
         document.createElement(
-          'span'
+          "span"
         );
-
 
       span.textContent =
         day === todayKey()
-          ? 'Vandaag'
+          ? "Vandaag"
           : fmtDate(day);
 
 
@@ -2745,33 +2683,35 @@ function renderOverviewDayChecks() {
         span
       );
 
-
       wrap.appendChild(
         label
       );
 
-    });
+    }
+  );
 
 }
 
+
+/* =========================================================
+   MEERDAGEN GRAFIEK
+========================================================= */
 
 function renderOverviewChart() {
 
   const canvas =
     document.getElementById(
-      'overviewChart'
+      "overviewChart"
     );
-
 
   const container =
     document.getElementById(
-      'overviewChartContainer'
+      "overviewChartContainer"
     );
-
 
   const empty =
     document.getElementById(
-      'overviewChartEmpty'
+      "overviewChartEmpty"
     );
 
 
@@ -2779,107 +2719,54 @@ function renderOverviewChart() {
 
     overviewChart.destroy();
 
-    overviewChart =
-      null;
+    overviewChart = null;
 
   }
 
 
   const selectedDays =
-    state.overviewDays
-      .filter(
-        day =>
-          state.days.includes(day)
-      );
+    state.overviewDays.filter(
+      day =>
+        state.days.includes(day) ||
+        state.visits.some(
+          visit =>
+            visit.day === day
+        )
+    );
 
 
   /*
-   * Elke dag is een dataset.
+   * BELANGRIJKE KEUZE:
    *
-   * MAAR de x-waarde is voor alle datasets
-   * dezelfde echte datum/tijd.
+   * Geen echte datetime-as.
+   * We gebruiken één categorie per werkelijk
+   * geregistreerd moment.
    *
-   * Hierdoor kunnen dagen niet meer over elkaar
-   * heen vallen.
+   * Daardoor worden lege uren/dagen NIET
+   * als lege ruimte op de x-as getekend.
    */
 
-  const datasets =
+  const visits =
     selectedDays
-      .map(day => {
-
-        const visits =
-          dayVisits(day);
-
-
-        return {
-
-          label:
-            day === todayKey()
-              ? 'Vandaag'
-              : fmtDate(day),
-
-
-          data:
-            visits.map(
-              visit => ({
-
-                x:
-                  new Date(
-                    visit.dateTime
-                  ).getTime(),
-
-                y:
-                  Number(
-                    visit.score
-                  ),
-
-                place:
-                  visit.place,
-
-                type:
-                  visit.type,
-
-                dateTime:
-                  visit.dateTime
-
-              })
-            ),
-
-
-          /*
-           * De meetpunten worden per dag verbonden.
-           * De punten zelf blijven herkenbaar.
-           */
-
-          showLine:true,
-
-          tension:.2,
-
-          pointRadius:6,
-
-          pointHoverRadius:9,
-
-          borderWidth:2,
-
-          spanGaps:false
-
-        };
-
-      })
-      .filter(
-        dataset =>
-          dataset.data.length > 0
+      .flatMap(
+        day =>
+          dayVisits(day)
+      )
+      .sort(
+        (a,b) =>
+          new Date(a.dateTime) -
+          new Date(b.dateTime)
       );
 
 
-  if (!datasets.length) {
+  if (!visits.length) {
 
     container.classList.add(
-      'hidden'
+      "hidden"
     );
 
     empty.classList.remove(
-      'hidden'
+      "hidden"
     );
 
     return;
@@ -2888,82 +2775,143 @@ function renderOverviewChart() {
 
 
   container.classList.remove(
-    'hidden'
+    "hidden"
   );
-
 
   empty.classList.add(
-    'hidden'
+    "hidden"
   );
 
 
-  /*
-   * Alle x-waarden bepalen.
-   */
-
-  const allX =
-    datasets.flatMap(
-      dataset =>
-        dataset.data.map(
-          point => point.x
-        )
+  const labels =
+    visits.map(
+      visit =>
+        visit.dateTime
     );
 
 
-  const minX =
-    Math.min(...allX);
+  const data =
+    visits.map(
+      visit => ({
 
+        x:
+          visit.dateTime,
 
-  const maxX =
-    Math.max(...allX);
+        y:
+          Number(
+            visit.score
+          ),
+
+        place:
+          visit.place,
+
+        type:
+          visit.type,
+
+        dateTime:
+          visit.dateTime,
+
+        day:
+          visit.day
+
+      })
+    );
 
 
   const options =
-    baseChartOptions();
+    chartBaseOptions();
 
 
   options.scales.x = {
 
-    type:'linear',
+    type:"category",
 
-    min:minX,
+    labels,
 
-    max:maxX,
+    offset:true,
 
-    ticks: {
+    ticks:{
 
-      color:'#f7f3e8',
+      color:"#f7f3e8",
 
-      maxTicksLimit:10,
+      autoSkip:true,
 
-      callback:
-        value =>
-          formatMultiDateTime(value)
+      maxTicksLimit:14,
+
+      maxRotation:45,
+
+      minRotation:0,
+
+      callback(
+        value,
+        index
+      ) {
+
+        const visit =
+          visits[index];
+
+        if (!visit) {
+          return "";
+        }
+
+        const d =
+          new Date(
+            visit.dateTime
+          );
+
+        const dayLabel =
+          d.toLocaleDateString(
+            "nl-NL",
+            {
+              day:"2-digit",
+              month:"2-digit"
+            }
+          );
+
+        const timeLabel =
+          d.toLocaleTimeString(
+            "nl-NL",
+            {
+              hour:"2-digit",
+              minute:"2-digit"
+            }
+          );
+
+        return [
+          dayLabel,
+          timeLabel
+        ];
+
+      }
 
     },
 
-    grid: {
+    grid:{
 
       color:
-        'rgba(247,243,232,.07)'
+        context => {
+
+          if (
+            context.tick?.value ===
+            0
+          ) {
+            return "rgba(247,243,232,.12)";
+          }
+
+          return "rgba(247,243,232,.07)";
+
+        }
 
     },
 
-    border: {
-
-      color:
-        'rgba(247,243,232,.15)'
-
+    border:{
+      color:"rgba(247,243,232,.15)"
     },
 
-    title: {
-
+    title:{
       display:true,
-
-      text:'Datum en tijd',
-
-      color:'#f7f3e8'
-
+      text:"Dag en tijd van geregistreerde momenten",
+      color:"#f7f3e8"
     }
 
   };
@@ -2971,35 +2919,31 @@ function renderOverviewChart() {
 
   options.plugins.tooltip = {
 
-    mode:'nearest',
+    mode:"nearest",
 
     intersect:false,
 
-
-    callbacks: {
+    callbacks:{
 
       title(items) {
 
         if (!items.length) {
-          return '';
+          return "";
         }
 
-
-        return formatFullDateTime(
-          items[0].raw.x
+        return fmtFullDateTime(
+          items[0].raw.dateTime
         );
 
       },
-
 
       label(context) {
 
         const raw =
           context.raw;
 
-
         return [
-          `${raw.place}`,
+          raw.place,
           `Score: ${raw.y}/100`
         ];
 
@@ -3015,10 +2959,51 @@ function renderOverviewChart() {
       canvas,
       {
 
-        type:'line',
+        type:"line",
 
-        data: {
-          datasets
+        data:{
+
+          labels,
+
+          datasets:[
+
+            {
+
+              label:
+                "Batterijscore",
+
+              data,
+
+              showLine:true,
+
+              borderColor:
+                "#d4af37",
+
+              backgroundColor:
+                "#d4af37",
+
+              borderWidth:2,
+
+              tension:.18,
+
+              pointRadius:6,
+
+              pointHoverRadius:9,
+
+              pointBackgroundColor:
+                "#d4af37",
+
+              pointBorderColor:
+                "#123524",
+
+              pointBorderWidth:2,
+
+              spanGaps:false
+
+            }
+
+          ]
+
         },
 
         options
@@ -3030,7 +3015,138 @@ function renderOverviewChart() {
 
 
 /* =========================================================
-   DOWNLOADS
+   CSV
+========================================================= */
+
+function csvEscape(value) {
+
+  const text =
+    String(value ?? "");
+
+  return `"${text.replaceAll(
+    '"',
+    '""'
+  )}"`;
+
+}
+
+
+function downloadCsv() {
+
+  const visits =
+    dayVisits(state.active);
+
+  if (!visits.length) {
+
+    alert(
+      "Er zijn geen geregistreerde momenten om te downloaden."
+    );
+
+    return;
+
+  }
+
+
+  const rows = [
+
+    [
+      "Datum",
+      "Tijd",
+      "Categorie",
+      "Moment",
+      "Rijk",
+      "Batterijscore"
+    ],
+
+    ...visits.map(
+      visit => [
+
+        visit.day,
+
+        fmtTime(
+          visit.dateTime
+        ),
+
+        TYPE_LABELS[
+          visit.type
+        ] || visit.type,
+
+        visit.place,
+
+        visit.realm || "",
+
+        visit.score
+
+      ]
+    )
+
+  ];
+
+
+  const csv =
+    "\uFEFF" +
+    rows
+      .map(
+        row =>
+          row
+            .map(csvEscape)
+            .join(";")
+      )
+      .join("\r\n");
+
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type:
+          "text/csv;charset=utf-8;"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href = url;
+
+  link.download =
+    `ouderbatterij-${state.active}.csv`;
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  link.remove();
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}
+
+
+document
+  .getElementById(
+    "downloadCsvBtn"
+  )
+  .addEventListener(
+    "click",
+    downloadCsv
+  );
+
+
+/* =========================================================
+   CHART DOWNLOADS
 ========================================================= */
 
 function downloadChart() {
@@ -3039,23 +3155,19 @@ function downloadChart() {
     return;
   }
 
-
   const link =
     document.createElement(
-      'a'
+      "a"
     );
-
 
   link.href =
     scoreChart.toBase64Image(
-      'image/png',
+      "image/png",
       1
     );
 
-
   link.download =
     `ouderbatterij-${state.active}-scoreverloop.png`;
-
 
   link.click();
 
@@ -3068,23 +3180,19 @@ function downloadOverviewChart() {
     return;
   }
 
-
   const link =
     document.createElement(
-      'a'
+      "a"
     );
-
 
   link.href =
     overviewChart.toBase64Image(
-      'image/png',
+      "image/png",
       1
     );
 
-
   link.download =
-    'ouderbatterij-meerdagen-overzicht.png';
-
+    "ouderbatterij-meerdagen-overzicht.png";
 
   link.click();
 
@@ -3093,102 +3201,371 @@ function downloadOverviewChart() {
 
 document
   .getElementById(
-    'downloadChartBtn'
+    "downloadChartBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     downloadChart
   );
 
 
 document
   .getElementById(
-    'downloadOverviewChartBtn'
+    "downloadOverviewChartBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     downloadOverviewChart
   );
 
 
 /* =========================================================
-   NAVIGATIE BUTTONS
+   VIEW MANAGEMENT
+========================================================= */
+
+function setView(view) {
+
+  currentView =
+    view;
+
+  const historyView =
+    document.getElementById(
+      "historyView"
+    );
+
+  const dashboardView =
+    document.getElementById(
+      "dashboardView"
+    );
+
+  const multiView =
+    document.getElementById(
+      "multiView"
+    );
+
+
+  historyView.classList.toggle(
+    "hidden",
+    view !== "history"
+  );
+
+  dashboardView.classList.toggle(
+    "hidden",
+    view !== "today"
+  );
+
+  multiView.classList.toggle(
+    "hidden",
+    view !== "multi"
+  );
+
+
+  updateViewButtons();
+
+
+  if (view === "today") {
+
+    setTimeout(
+      () => {
+
+        renderChart();
+
+        map.invalidateSize();
+
+      },
+      80
+    );
+
+  }
+
+
+  if (view === "multi") {
+
+    setTimeout(
+      () => {
+
+        renderOverviewChart();
+
+      },
+      80
+    );
+
+  }
+
+}
+
+
+function updateViewButtons() {
+
+  document
+    .getElementById(
+      "viewTodayBtn"
+    )
+    .classList.toggle(
+      "tab-active",
+      currentView === "today"
+    );
+
+  document
+    .getElementById(
+      "viewHistoryBtn"
+    )
+    .classList.toggle(
+      "tab-active",
+      currentView === "history"
+    );
+
+  document
+    .getElementById(
+      "viewMultiBtn"
+    )
+    .classList.toggle(
+      "tab-active",
+      currentView === "multi"
+    );
+
+}
+
+
+/* =========================================================
+   NAVIGATIE
 ========================================================= */
 
 document
   .getElementById(
-    'viewTodayBtn'
+    "viewTodayBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     () => {
-
-      /*
-       * De knop Vandaag betekent daadwerkelijk
-       * vandaag, niet de laatst bekeken historische dag.
-       */
 
       state.active =
         todayKey();
 
+      if (
+        !state.days.includes(
+          state.active
+        )
+      ) {
+
+        state.days.unshift(
+          state.active
+        );
+
+      }
 
       saveState();
 
-
       renderAll();
 
+      setView("today");
 
-      setView(
-        'today'
+    }
+  );
+
+
+document
+  .getElementById(
+    "viewHistoryBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      renderHistory();
+
+      setView("history");
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "viewMultiBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      renderOverviewDayChecks();
+
+      renderOverviewChart();
+
+      setView("multi");
+
+    }
+  );
+
+
+/* =========================================================
+   GESCHIEDENIS
+========================================================= */
+
+function renderHistory() {
+
+  const list =
+    document.getElementById(
+      "historyList"
+    );
+
+  const empty =
+    document.getElementById(
+      "historyEmpty"
+    );
+
+  const count =
+    document.getElementById(
+      "historyCount"
+    );
+
+
+  list.innerHTML = "";
+
+
+  const days =
+    sortedDays().filter(
+      day =>
+        day !== todayKey()
+    );
+
+
+  count.textContent =
+    `${days.length} eerdere bezoekdag${
+      days.length === 1
+        ? ""
+        : "en"
+    }`;
+
+
+  if (!days.length) {
+
+    empty.classList.remove(
+      "hidden"
+    );
+
+    return;
+
+  }
+
+  empty.classList.add(
+    "hidden"
+  );
+
+
+  days.forEach(
+    day => {
+
+      const visits =
+        dayVisits(day);
+
+      const average =
+        visits.length
+          ? (
+              visits.reduce(
+                (sum,v) =>
+                  sum +
+                  Number(v.score),
+                0
+              ) /
+              visits.length
+            ).toFixed(0)
+          : "—";
+
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.className =
+        "w-full text-left bg-eft-green2/70 hover:bg-eft-green2 gold-border rounded-xl p-4 transition";
+
+
+      button.innerHTML = `
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+
+          <div>
+
+            <div class="font-semibold text-eft-gold">
+              ${escapeHtml(
+                fmtDate(day)
+              )}
+            </div>
+
+            <div class="text-xs text-eft-cream/55 mt-1">
+              ${visits.length}
+              ${visits.length === 1 ? "moment" : "momenten"}
+            </div>
+
+          </div>
+
+          <div class="text-right">
+
+            <div class="text-sm font-bold text-eft-cream">
+              Gemiddeld ${average}/100
+            </div>
+
+            <div class="text-xs text-eft-gold mt-1">
+              Bekijk bezoek →
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          state.active =
+            day;
+
+          saveState();
+
+          renderAll();
+
+          setView("today");
+
+        }
+      );
+
+
+      list.appendChild(
+        button
       );
 
     }
   );
 
-
-document
-  .getElementById(
-    'viewHistoryBtn'
-  )
-  .addEventListener(
-    'click',
-    () =>
-      setView('history')
-  );
-
-
-document
-  .getElementById(
-    'viewMultiBtn'
-  )
-  .addEventListener(
-    'click',
-    () =>
-      setView('multi')
-  );
+}
 
 
 /* =========================================================
-   MEERDAGEN SELECTIE
+   MEERDAGEN KNOPPEN
 ========================================================= */
 
 document
   .getElementById(
-    'selectAllDaysBtn'
+    "selectAllDaysBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     () => {
 
       state.overviewDays =
         sortedDays();
 
-
       saveState();
 
-
       renderOverviewDayChecks();
-
 
       renderOverviewChart();
 
@@ -3198,44 +3575,19 @@ document
 
 document
   .getElementById(
-    'selectNoDaysBtn'
+    "selectNoDaysBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     () => {
 
-      state.overviewDays =
-        [];
-
+      state.overviewDays = [];
 
       saveState();
 
-
       renderOverviewDayChecks();
 
-
       renderOverviewChart();
-
-    }
-  );
-
-
-/* =========================================================
-   SCORE SLIDER
-========================================================= */
-
-document
-  .getElementById(
-    'scoreSlider'
-  )
-  .addEventListener(
-    'input',
-    event => {
-
-      document.getElementById(
-        'scoreValue'
-      ).textContent =
-        event.target.value;
 
     }
   );
@@ -3247,43 +3599,40 @@ document
 
 document
   .getElementById(
-    'saveBtn'
+    "saveBtn"
   )
   .addEventListener(
-    'click',
+    "click",
     () => {
 
       const type =
         categorySelect.value;
 
 
-      const place =
-        placeSelect.value === '__custom__'
+      let place =
+        placeSelect.value;
 
-          ?
 
-          customPlace.value.trim()
+      if (
+        place ===
+        "__custom__"
+      ) {
 
-          :
+        place =
+          customPlace.value.trim();
 
-          placeSelect.value;
+      }
 
 
       if (!place) {
 
         alert(
-          'Kies of vul eerst in wat je hebt gedaan.'
+          "Kies of vul eerst in wat je hebt gedaan."
         );
 
         return;
 
       }
-
-
-      const dateTimeInput =
-        document.getElementById(
-          'dateTimeInput'
-        );
 
 
       const dateTime =
@@ -3297,7 +3646,7 @@ document
       ) {
 
         alert(
-          'Vul een geldige datum en tijd in.'
+          "Vul een geldige datum en tijd in."
         );
 
         return;
@@ -3305,20 +3654,18 @@ document
       }
 
 
-      const chosenDate =
-        new Date(
-          dateTime
-        );
+      const parsedDate =
+        new Date(dateTime);
 
 
       if (
         Number.isNaN(
-          chosenDate.getTime()
+          parsedDate.getTime()
         )
       ) {
 
         alert(
-          'Vul een geldige datum en tijd in.'
+          "Vul een geldige datum en tijd in."
         );
 
         return;
@@ -3333,8 +3680,27 @@ document
         );
 
 
+      let realm = "";
+
+
+      const poi =
+        POIS.find(
+          item =>
+            item.name ===
+            place
+        );
+
+
+      if (poi) {
+        realm =
+          poi.realm;
+      }
+
+
       if (
-        !state.days.includes(day)
+        !state.days.includes(
+          day
+        )
       ) {
 
         state.days.unshift(
@@ -3347,38 +3713,27 @@ document
       const visit = {
 
         id:
-          crypto.randomUUID
-            ? crypto.randomUUID()
-            : String(
-                Date.now()
-              ),
+          (
+            window.crypto &&
+            typeof window.crypto.randomUUID ===
+              "function"
+          )
+            ? window.crypto.randomUUID()
+            : `${Date.now()}-${Math.random()}`,
 
-        day:
+        day,
 
-          day,
+        dateTime,
 
-        dateTime:
+        type,
 
-          dateTime,
+        realm,
 
-        type:
-
-          type,
-
-        realm:
-
-          realmSelect.value,
-
-        place:
-
-          place,
+        place,
 
         score:
-
           Number(
-            document.getElementById(
-              'scoreSlider'
-            ).value
+            scoreSlider.value
           )
 
       };
@@ -3389,19 +3744,9 @@ document
       );
 
 
-      /*
-       * De zojuist opgeslagen dag wordt
-       * automatisch de actieve dag.
-       */
-
       state.active =
         day;
 
-
-      /*
-       * Nieuwe dag meteen meenemen
-       * in het meerdaagse overzicht.
-       */
 
       if (
         !state.overviewDays.includes(
@@ -3419,25 +3764,22 @@ document
       saveState();
 
 
-      document
-        .getElementById(
-          'savedMsg'
-        )
-        .classList.remove(
-          'hidden'
+      const savedMsg =
+        document.getElementById(
+          "savedMsg"
         );
+
+      savedMsg.classList.remove(
+        "hidden"
+      );
 
 
       setTimeout(
         () => {
 
-          document
-            .getElementById(
-              'savedMsg'
-            )
-            .classList.add(
-              'hidden'
-            );
+          savedMsg.classList.add(
+            "hidden"
+          );
 
         },
         1400
@@ -3447,194 +3789,9 @@ document
       refreshDateTimeInput();
 
 
-      /*
-       * BELANGRIJK:
-       *
-       * renderAll() roept nu ook renderChart()
-       * aan. Hierdoor verschijnt het nieuwe
-       * meetpunt direct in Scoreverloop.
-       */
-
       renderAll();
 
-    }
-  );
-
-
-/* =========================================================
-   DAG WISSEN
-========================================================= */
-
-document
-  .getElementById(
-    'clearDayBtn'
-  )
-  .addEventListener(
-    'click',
-    () => {
-
-      const day =
-        state.active;
-
-
-      if (
-        !confirm(
-          `Alle geregistreerde momenten van ${
-            day === todayKey()
-              ? 'vandaag'
-              : fmtDate(day)
-          } wissen?`
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      state.visits =
-        state.visits.filter(
-          visit =>
-            visit.day !== day
-        );
-
-
-      /*
-       * Historische dag verwijderen
-       * uit de lijst met dagen.
-       */
-
-      if (
-        day !== todayKey()
-      ) {
-
-        state.days =
-          state.days.filter(
-            d => d !== day
-          );
-
-
-        state.overviewDays =
-          state.overviewDays.filter(
-            d => d !== day
-          );
-
-      }
-
-
-      state.active =
-        todayKey();
-
-
-      if (
-        !state.days.includes(
-          state.active
-        )
-      ) {
-
-        state.days.unshift(
-          state.active
-        );
-
-      }
-
-
-      if (
-        !state.overviewDays.includes(
-          state.active
-        )
-      ) {
-
-        state.overviewDays.push(
-          state.active
-        );
-
-      }
-
-
-      renderAll();
-
-    }
-  );
-
-
-/* =========================================================
-   LOCATIE
-========================================================= */
-
-document
-  .getElementById(
-    'locateBtn'
-  )
-  .addEventListener(
-    'click',
-    () => {
-
-      const status =
-        document.getElementById(
-          'locStatus'
-        );
-
-
-      if (
-        !navigator.geolocation
-      ) {
-
-        status.textContent =
-          '📍 Locatie wordt niet ondersteund door deze browser.';
-
-        return;
-
-      }
-
-
-      status.textContent =
-        '📍 Locatie wordt opgehaald…';
-
-
-      navigator.geolocation.getCurrentPosition(
-
-        position => {
-
-          const latLng = [
-
-            position.coords.latitude,
-
-            position.coords.longitude
-
-          ];
-
-
-          L.marker(
-            latLng
-          )
-          .addTo(map)
-          .bindPopup(
-            '📍 Jij bent hier'
-          )
-          .openPopup();
-
-
-          map.setView(
-            latLng,
-            17
-          );
-
-
-          status.textContent =
-            '📍 Jouw locatie is op de kaart gezet.';
-
-        },
-
-
-        () => {
-
-          status.textContent =
-            '⚠️ Locatie kon niet worden opgehaald.';
-
-        }
-
-      );
+      setView("today");
 
     }
   );
@@ -3644,26 +3801,7 @@ document
    MUZIEK
 ========================================================= */
 
-const backgroundMusic =
-  document.getElementById(
-    'backgroundMusic'
-  );
-
-
-const musicBtn =
-  document.getElementById(
-    'musicBtn'
-  );
-
-
-const musicStatus =
-  document.getElementById(
-    'musicStatus'
-  );
-
-
-let musicOn =
-  false;
+let musicOn = false;
 
 
 async function playMusic() {
@@ -3672,24 +3810,16 @@ async function playMusic() {
 
     await backgroundMusic.play();
 
-
-    musicOn =
-      true;
-
+    musicOn = true;
 
     musicBtn.textContent =
-      '🔇 Muziek uit';
+      "🔇 Muziek uit";
 
+  } catch (error) {
 
-    musicStatus.textContent =
-      '🎵 Ouderbatterij speelt nu op de achtergrond.';
-
-  }
-
-  catch(error) {
-
-    musicStatus.textContent =
-      '⚠️ De muziek kon niet starten. Controleer of Ouderbatterij.mp3 naast index.html staat.';
+    alert(
+      "De muziek kon niet starten. Controleer of Ouderbatterij.mp3 naast index.html staat."
+    );
 
   }
 
@@ -3700,27 +3830,29 @@ function pauseMusic() {
 
   backgroundMusic.pause();
 
-
-  musicOn =
-    false;
-
+  musicOn = false;
 
   musicBtn.textContent =
-    '🔊 Muziek aan';
-
-
-  musicStatus.textContent =
-    '🎵 Muziek staat uit.';
+    "🔊 Muziek aan";
 
 }
 
 
 musicBtn.addEventListener(
-  'click',
-  () =>
-    musicOn
-      ? pauseMusic()
-      : playMusic()
+  "click",
+  () => {
+
+    if (musicOn) {
+
+      pauseMusic();
+
+    } else {
+
+      playMusic();
+
+    }
+
+  }
 );
 
 
@@ -3730,43 +3862,17 @@ musicBtn.addEventListener(
 
 function renderAll() {
 
-  /*
-   * Dag/tabel
-   */
-
   renderDay();
-
-
-  /*
-   * Geschiedenis
-   */
 
   renderHistory();
 
-
-  /*
-   * BELANGRIJKE FIX:
-   *
-   * De plot van Vandaag werd eerder niet
-   * aangeroepen. Hierdoor bleef scoreChart
-   * leeg ondanks dat de meetpunten wel in
-   * localStorage stonden.
-   */
-
   renderChart();
-
-
-  /*
-   * Meerdaagse grafiek
-   */
 
   renderOverviewDayChecks();
 
   renderOverviewChart();
 
-
   updateViewButtons();
-
 
   saveState();
 
@@ -3777,7 +3883,16 @@ function renderAll() {
    START
 ========================================================= */
 
+populatePlaceSelect();
+
+refreshDateTimeInput();
+
+scoreValue.textContent =
+  scoreSlider.value;
+
 renderAll();
+
+setView("today");
 
 </script>
 
