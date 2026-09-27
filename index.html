@@ -217,6 +217,7 @@ body {
   height: 430px;
   border-radius: .75rem;
   z-index: 0;
+  cursor: crosshair;
 }
 
 .chart-wrap {
@@ -539,47 +540,11 @@ input[type=range]::-moz-range-thumb {
 
   </div>
 
-  <div class="grid sm:grid-cols-2 gap-2 mb-3">
-
-    <label class="text-xs text-eft-cream/70">
-
-      Categorie
-
-      <select
-        id="mapCategory"
-        class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
-      >
-        <option value="alle">Alles</option>
-        <option value="attractie">🎢 Attracties</option>
-        <option value="restaurant">🍴 Restaurants</option>
-        <option value="show">🎭 Parkshows</option>
-        <option value="souvenir">🛍️ Souvenirs</option>
-        <option value="rijk">🏰 Rijken</option>
-      </select>
-
-    </label>
-
-    <label class="text-xs text-eft-cream/70">
-
-      Rijk
-
-      <select
-        id="mapRealm"
-        class="mt-1 w-full rounded-lg bg-eft-cream text-eft-green px-2 py-2"
-      >
-        <option value="alle">Alle rijken</option>
-        <option>Marerijk</option>
-        <option>Reizenrijk</option>
-        <option>Ruigrijk</option>
-        <option>Anderrijk</option>
-        <option>Fantasierijk</option>
-      </select>
-
-    </label>
-
-  </div>
-
   <div id="map"></div>
+
+  <p class="text-xs text-eft-cream/55 mt-2">
+    👆 Tik of klik op de kaart om de dichtstbijzijnde benoemde plek te kiezen.
+  </p>
 
   <p
     id="locStatus"
@@ -1035,6 +1000,7 @@ const POIS = [
   {name:"De Vliegende Hollander",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04540},
   {name:"Python",type:"attractie",realm:"Ruigrijk",lat:51.65114,lng:5.05068},
   {name:"Piraña",type:"attractie",realm:"Ruigrijk",lat:51.64650,lng:5.04800},
+  {name:"Max & Moritz",type:"attractie",realm:"Anderrijk",lat:51.64775,lng:5.04890},
   {name:"Halve Maen",type:"attractie",realm:"Ruigrijk",lat:51.64780,lng:5.04500},
   {name:"De Oude Tufferbaan",type:"attractie",realm:"Ruigrijk",lat:51.64700,lng:5.04550},
 
@@ -1042,6 +1008,7 @@ const POIS = [
   {name:"Villa Volta",type:"attractie",realm:"Marerijk",lat:51.64850,lng:5.05050},
   {name:"Droomvlucht",type:"attractie",realm:"Marerijk",lat:51.64988,lng:5.04982},
   {name:"Sprookjesbos",type:"attractie",realm:"Marerijk",lat:51.64900,lng:5.04550},
+  {name:"Langnek",type:"attractie",realm:"Marerijk",lat:51.64970,lng:5.04761},
   {name:"Het Volk van Laaf",type:"attractie",realm:"Marerijk",lat:51.64890,lng:5.04730},
   {name:"Anton Pieckplein",type:"attractie",realm:"Marerijk",lat:51.64935,lng:5.04700},
   {name:"Kleuterhof",type:"attractie",realm:"Marerijk",lat:51.64870,lng:5.04780},
@@ -1121,6 +1088,7 @@ const POIS = [
   {name:"De Gevoelighe Plaet",type:"souvenir",realm:"Ruigrijk",lat:51.64870,lng:5.04600}
 
 ];
+
 
 
 /* =========================================================
@@ -1616,6 +1584,12 @@ const map =
   );
 
 
+/*
+ * De OpenStreetMap-kaart zelf is de plattegrond.
+ * We tekenen hier bewust GEEN eigen attractielabels of markers.
+ * Daardoor komen Python, Langnek, restaurants, winkels enz. precies
+ * van dezelfde kaartbron als de tekst die de gebruiker ziet.
+ */
 L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   {
@@ -1625,176 +1599,322 @@ L.tileLayer(
 ).addTo(map);
 
 
-let markerLayer =
-  L.layerGroup().addTo(map);
+/*
+ * De oude markerlaag blijft als variabele bestaan zodat de rest van de
+ * bestaande pagina niet hoeft te veranderen, maar bevat geen POI-markers.
+ */
+let markerLayer = L.layerGroup().addTo(map);
 
 
-const markerColors = {
-  attractie: "#d4af37",
-  restaurant: "#e2725b",
-  show: "#7c83fd",
-  souvenir: "#d06adf",
-  rijk: "#55a36f",
-  overig: "#9aa0a6"
+/*
+ * De filters blijven bestaan in de bestaande interface. Ze veranderen
+ * niet langer de kaart zelf: de kaartlabels komen rechtstreeks uit de
+ * kaarttegels. Bij "Vind mijn locatie" worden ze wel meegenomen bij het
+ * bepalen van de dichtstbijzijnde geschikte plek.
+ */
+function renderMap() {
+  markerLayer.clearLayers();
+  setTimeout(() => map.invalidateSize(), 50);
+}
+
+
+/* =========================================================
+   ACTUELE OPENSTREETMAP-LOCATIES VOOR "DICHTSTBIJ"
+========================================================= */
+
+let osmPlacesCache = null;
+let osmPlacesPromise = null;
+
+
+function normalizePlaceName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "'")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+
+const FAIRY_TALE_NAMES = [
+  "De Prinses op de Erwt", "Assepoester", "De Draak", "De Indische Waterlelies",
+  "De Kikkerkoning", "De kleine Zeemeermin", "De magische Klok",
+  "De nieuwe Kleren van de Keizer", "De rode Schoentjes", "De Trollenkoning",
+  "De Tuinman en de Fakir", "De Wolf en de zeven Geitjes", "De zes Dienaren",
+  "De zes Zwanen", "Doornroosje", "Ezeltje strek je", "Hans en Grietje",
+  "Het Bruidskleed van Genoveva", "Het Meisje met de Zwavelstokjes",
+  "Het stoute Prinsesje", "Het Kabouterdorp", "Klein Duimpje", "Kleine Boodschap",
+  "Pinokkio", "Raponsje", "Repelsteeltje", "Roodkapje", "Sneeuwwitje",
+  "Sprookjesboom", "Vrouw Holle"
+];
+
+const FAIRY_ALIASES = {
+  "langnek":"Langnek",
+  "de zes dienaren":"Langnek",
+  "kabouterdorp":"Het Kabouterdorp",
+  "de rode schoentjes":"De rode Schoentjes",
+  "rode schoentjes":"De rode Schoentjes",
+  "de magische klok":"De magische Klok",
+  "magische klok":"De magische Klok",
+  "de wolf en de zeven geitjes":"De Wolf en de zeven Geitjes",
+  "wolf en de zeven geitjes":"De Wolf en de zeven Geitjes",
+  "ezeltje strek je":"Ezeltje strek je",
+  "tafeltje dek je ezeltje strek je knuppel uit de zak":"Ezeltje strek je",
+  "de put van vrouw holle":"Vrouw Holle",
+  "put van vrouw holle":"Vrouw Holle",
+  "huis van vrouw holle":"Vrouw Holle",
+  "huisje van vrouw holle":"Vrouw Holle",
+  "de kleine zeemeermin":"De kleine Zeemeermin",
+  "de nieuwe kleren van de keizer":"De nieuwe Kleren van de Keizer",
+  "het bruidskleed van genoveva":"Het Bruidskleed van Genoveva"
 };
 
-
-function makeMarkerIcon(type) {
-
-  const color =
-    markerColors[type] ||
-    markerColors.overig;
-
-  return L.divIcon({
-    className:"",
-    html:`
-      <div
-        style="
-          width:16px;
-          height:16px;
-          border-radius:50%;
-          background:${color};
-          border:2px solid #123524;
-          box-shadow:0 2px 5px rgba(0,0,0,.4);
-        "
-      ></div>
-    `,
-    iconSize:[16,16],
-    iconAnchor:[8,8]
-  });
-
+function fairyNameForOsm(name) {
+  const n = normalizePlaceName(name);
+  if (FAIRY_ALIASES[n]) return FAIRY_ALIASES[n];
+  return FAIRY_TALE_NAMES.find(x => normalizePlaceName(x) === n) || null;
 }
 
+// Zorg dat ieder officieel Sprookjesbos-verhaal als bestaande formulieroptie bestaat.
+FAIRY_TALE_NAMES.forEach(name => {
+  if (!POIS.some(poi => normalizePlaceName(poi.name) === normalizePlaceName(name))) {
+    POIS.push({ name, type: "attractie", realm: "Marerijk", isFairyTale: true });
+  }
+});
 
-function renderMap() {
-
-  markerLayer.clearLayers();
-
-  const category =
-    document.getElementById(
-      "mapCategory"
-    ).value;
-
-  const realm =
-    document.getElementById(
-      "mapRealm"
-    ).value;
-
-
+function getOsmPoint(element) {
   if (
-    category === "alle" ||
-    category === "rijk"
+    element.lat != null &&
+    element.lon != null
   ) {
-
-    REALMS
-      .filter(
-        r =>
-          realm === "alle" ||
-          r.name === realm
-      )
-      .forEach(r => {
-
-        L.marker(
-          [r.lat,r.lng],
-          {
-            icon:
-              makeMarkerIcon("rijk")
-          }
-        )
-        .addTo(markerLayer)
-        .bindPopup(`
-          <strong>🏰 ${escapeHtml(r.name)}</strong>
-          <br>
-          <small>Rijk</small>
-        `);
-
-      });
-
+    return [element.lat, element.lon];
   }
 
+  if (
+    element.center &&
+    element.center.lat != null &&
+    element.center.lon != null
+  ) {
+    return [element.center.lat, element.center.lon];
+  }
 
-  POIS
-    .filter(
-      poi =>
-        (
-          category === "alle" ||
-          category === poi.type
-        ) &&
-        (
-          realm === "alle" ||
-          realm === poi.realm
-        )
-    )
-    .forEach(poi => {
+  return null;
+}
 
-      const marker =
-        L.marker(
-          [poi.lat,poi.lng],
-          {
-            icon:
-              makeMarkerIcon(
-                poi.type
-              )
-          }
-        )
-        .addTo(markerLayer);
 
-      marker.bindPopup(`
-        <strong>${escapeHtml(poi.name)}</strong>
-        <br>
-        <small>${escapeHtml(poi.realm)}</small>
-        <br><br>
-        <button
-          type="button"
-          data-map-place="${escapeHtml(poi.name)}"
-          style="
-            background:#d4af37;
-            color:#123524;
-            border:0;
-            border-radius:6px;
-            padding:5px 8px;
-            font-weight:700;
-            cursor:pointer;
-          "
-        >
-          Gebruik deze plek
-        </button>
-      `);
+function isUsefulOsmPlace(element) {
+  const tags = element.tags || {};
+  if (!tags.name) return false;
 
-      marker.on(
-        "popupopen",
-        event => {
+  /*
+   * Alleen objecten die een betekenisvolle plek kunnen zijn.
+   * Wegen, gebouwen en terreinvlakken zonder relevante POI-tag worden
+   * bewust niet meegenomen als "dichtstbijzijnde attractie".
+   */
+  return Boolean(
+    tags.tourism ||
+    tags.amenity ||
+    tags.shop ||
+    tags.historic ||
+    tags.attraction ||
+    tags.building ||
+    tags.leisure === "playground" ||
+    tags.man_made === "tower" ||
+    tags.man_made === "monument" ||
+    tags.information
+  );
+}
 
-          const popup =
-            event.popup
-              .getElement();
 
-          const button =
-            popup?.querySelector(
-              "[data-map-place]"
-            );
+async function loadCurrentOsmPlaces() {
+  if (osmPlacesCache) return osmPlacesCache;
+  if (osmPlacesPromise) return osmPlacesPromise;
 
-          if (button) {
+  /*
+   * Dit is uitsluitend data van het Efteling-gebied. De kaart zelf blijft
+   * de officiële Leaflet/OpenStreetMap-laag; deze query wordt alleen gebruikt
+   * om GPS -> dichtstbijzijnde benoemde plek te koppelen.
+   */
+  const query = `
+    [out:json][timeout:15];
+    nwr["name"](51.642,5.039,51.656,5.058);
+    out center tags;
+  `;
 
-            button.onclick =
-              () => {
+  osmPlacesPromise = fetch(
+    "https://overpass-api.de/api/interpreter",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+      },
+      body: "data=" + encodeURIComponent(query)
+    }
+  )
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("OpenStreetMap kon niet worden geraadpleegd.");
+      }
+      return response.json();
+    })
+    .then(data => {
+      osmPlacesCache = (data.elements || [])
+        .filter(isUsefulOsmPlace)
+        .map(element => {
+          const point = getOsmPoint(element);
+          return point
+            ? {
+                name: element.tags.name,
+                lat: point[0],
+                lng: point[1],
+                tags: element.tags
+              }
+            : null;
+        })
+        .filter(Boolean);
 
-                selectPlaceFromMap(
-                  poi
-                );
-
-                map.closePopup();
-
-              };
-
-          }
-
-        }
-      );
-
+      return osmPlacesCache;
+    })
+    .finally(() => {
+      osmPlacesPromise = null;
     });
 
+  return osmPlacesPromise;
 }
+
+
+function distanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = value => value * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+
+function categoryForOsmPlace(osmPlace) {
+  const tags = osmPlace.tags || {};
+
+  if (
+    tags.shop ||
+    tags.amenity === "shop"
+  ) {
+    return "souvenir";
+  }
+
+  if (
+    tags.amenity === "restaurant" ||
+    tags.amenity === "cafe" ||
+    tags.amenity === "fast_food" ||
+    tags.amenity === "food_court"
+  ) {
+    return "restaurant";
+  }
+
+  if (
+    tags.tourism === "attraction" ||
+    tags.tourism === "museum" ||
+    tags.tourism === "viewpoint" ||
+    tags.attraction ||
+    tags.historic ||
+    tags.man_made === "monument" ||
+    tags.man_made === "tower"
+  ) {
+    return "attractie";
+  }
+
+  return "overig";
+}
+
+
+function findExistingPoi(osmPlace) {
+  if (typeof POIS === "undefined") return null;
+  const fairyName = fairyNameForOsm(osmPlace.name);
+  if (fairyName) {
+    return POIS.find(poi => normalizePlaceName(poi.name) === normalizePlaceName(fairyName)) || null;
+  }
+  const osmName = normalizePlaceName(osmPlace.name);
+  if (!osmName) return null;
+  return POIS.find(poi => normalizePlaceName(poi.name) === osmName) || null;
+}
+
+
+async function selectNearestPlaceFromGps(lat, lng) {
+  const places = await loadCurrentOsmPlaces();
+
+  if (!places.length) {
+    throw new Error("Geen actuele locaties van de kaart gevonden.");
+  }
+
+  const category =
+    document.getElementById("mapCategory")?.value || "alle";
+
+  const realm =
+    document.getElementById("mapRealm")?.value || "alle";
+
+  const candidates = places
+    .map(place => ({
+      ...place,
+      distance: distanceMeters(
+        lat,
+        lng,
+        place.lat,
+        place.lng
+      ),
+      poi: findExistingPoi(place)
+    }))
+    .filter(place => {
+      if (!place.poi) return true;
+
+      const categoryOk =
+        category === "alle" ||
+        category === "rijk" ||
+        place.poi.type === category;
+
+      const realmOk =
+        realm === "alle" ||
+        realm === "rijk" ||
+        place.poi.realm === realm;
+
+      return categoryOk && realmOk;
+    })
+    .sort((a, b) => a.distance - b.distance);
+
+  const nearest = candidates[0];
+  if (!nearest) {
+    throw new Error("Geen geschikte plek in de buurt gevonden.");
+  }
+
+  /*
+   * Bestaat de plek al in Ouderbatterij? Gebruik dan exact de bestaande
+   * registratie-optie. Zo blijft alle bestaande formulierlogica intact.
+   */
+  if (nearest.poi) {
+    selectPlaceFromMap(nearest.poi);
+    return nearest;
+  }
+
+  /*
+   * Staat een actuele kaartnaam nog niet in POIS (bijvoorbeeld een
+   * bezienswaardigheid zoals Langnek), gebruik dan de bestaande vrije
+   * tekst-optie van het formulier. We maken dus GEEN tweede formulier.
+   */
+  categorySelect.value = categoryForOsmPlace(nearest);
+  populatePlaceSelect();
+
+  placeSelect.value = "__custom__";
+  customPlace.classList.remove("hidden");
+  customPlace.value = nearest.name;
+
+  return nearest;
+}
+
 
 
 function selectPlaceFromMap(poi) {
@@ -1814,19 +1934,185 @@ function selectPlaceFromMap(poi) {
 }
 
 
-document
-  .getElementById("mapCategory")
-  .addEventListener(
-    "change",
-    renderMap
+/* =========================================================
+   KLIKBARE KAART
+========================================================= */
+
+/*
+ * De kaart zelf blijft volledig vrij van attractiemarkers.
+ * Bij een klik zoeken we in de actuele OpenStreetMap-data naar de
+ * dichtstbijzijnde benoemde plek binnen een kleine straal.
+ *
+ * Als die plek al in Ouderbatterij staat, wordt de bestaande optie
+ * in het bestaande formulier geselecteerd.
+ *
+ * Staat de plek nog niet in POIS, dan gebruiken we de bestaande
+ * "Vrije tekst…" optie. Er wordt dus geen tweede formulier gemaakt.
+ */
+async function selectNearestPlaceFromMapClick(lat, lng) {
+
+  // Alleen een heel kleine herkenningszone voor de Sprookjesboom.
+  // Buiten deze zone mag Sprookjesboom nooit een andere attractie of sprookje overschrijven.
+  const sprookjesboomLat = 51.649958;
+  const sprookjesboomLng = 5.046735;
+  const sprookjesboomDistance = distanceMeters(
+    lat, lng, sprookjesboomLat, sprookjesboomLng
   );
 
-document
-  .getElementById("mapRealm")
-  .addEventListener(
-    "change",
-    renderMap
-  );
+  if (sprookjesboomDistance <= 12) {
+    const poi = POIS.find(
+      p => normalizePlaceName(p.name) === normalizePlaceName("Sprookjesboom")
+    );
+    if (poi) {
+      selectPlaceFromMap(poi);
+      return {
+        name: poi.name,
+        lat: sprookjesboomLat,
+        lng: sprookjesboomLng,
+        distance: sprookjesboomDistance,
+        poi
+      };
+    }
+  }
+
+  const places =
+    await loadCurrentOsmPlaces();
+
+  const nearest =
+    places
+      .filter(place =>
+        normalizePlaceName(place.name) !== normalizePlaceName("Sprookjesboom")
+      )
+      .map(place => ({
+        ...place,
+        distance: distanceMeters(
+          lat,
+          lng,
+          place.lat,
+          place.lng
+        ),
+        poi: findExistingPoi(place)
+      }))
+      .sort(
+        (a, b) =>
+          a.distance - b.distance
+      )[0];
+
+  /*
+   * Alleen een echt nabije plek wordt gekoppeld. Zo voorkomt een klik
+   * ergens op de kaart dat er onverwacht een ver weg gelegen locatie
+   * wordt gekozen.
+   */
+  if (
+    !nearest ||
+    nearest.distance > 120
+  ) {
+    throw new Error(
+      "Geen benoemde plek binnen 120 meter van dit punt gevonden."
+    );
+  }
+
+  if (nearest.poi) {
+    selectPlaceFromMap(nearest.poi);
+  } else {
+    categorySelect.value =
+      categoryForOsmPlace(nearest);
+
+    populatePlaceSelect();
+
+    placeSelect.value =
+      "__custom__";
+
+    customPlace.classList.remove(
+      "hidden"
+    );
+
+    customPlace.value =
+      nearest.name;
+  }
+
+  return nearest;
+}
+
+
+
+/*
+ * Klik op de kaart: geen extra marker, alleen een klein popupje op
+ * de aangeklikte plek. De bestaande formulierkeuze wordt automatisch
+ * aangepast zodra de OSM-plek is gevonden.
+ */
+map.on(
+  "click",
+  async event => {
+
+    const status =
+      document.getElementById(
+        "locStatus"
+      );
+
+    status.textContent =
+      "🗺️ Dichtstbijzijnde plek wordt gezocht…";
+
+    const clickPoint = [
+      event.latlng.lat,
+      event.latlng.lng
+    ];
+
+    const popup =
+      L.popup({
+        closeButton: true,
+        autoClose: true
+      })
+      .setLatLng(clickPoint)
+      .setContent(
+        "🗺️ Plek wordt gezocht…"
+      )
+      .openOn(map);
+
+    try {
+
+      const nearest =
+        await selectNearestPlaceFromMapClick(
+          event.latlng.lat,
+          event.latlng.lng
+        );
+
+      const roundedDistance =
+        Math.round(nearest.distance);
+
+      popup.setContent(
+        `<strong>${nearest.name}</strong><br>` +
+        `<span style="font-size:.85em">` +
+        `${roundedDistance} meter vanaf het gekozen punt` +
+        `</span>`
+      );
+
+      status.textContent =
+        `🗺️ Gekozen: ${nearest.name} (${roundedDistance} m). ` +
+        `Klaar om te registreren.`;
+
+      placeSelect.focus();
+
+    } catch (error) {
+
+      console.warn(
+        "Kaartklik kon niet aan een OSM-plek worden gekoppeld:",
+        error
+      );
+
+      popup.setContent(
+        "Geen benoemde plek binnen 120 meter gevonden."
+      );
+
+      status.textContent =
+        "🗺️ Geen benoemde plek dichtbij dit punt gevonden. " +
+        "Probeer iets dichter bij een naam op de kaart te klikken.";
+
+    }
+
+  }
+);
+
 
 
 renderMap();
@@ -1840,7 +2126,7 @@ document
   .getElementById("locateBtn")
   .addEventListener(
     "click",
-    () => {
+    async () => {
 
       const status =
         document.getElementById(
@@ -1861,25 +2147,70 @@ document
 
       navigator.geolocation.getCurrentPosition(
 
-        position => {
+        async position => {
 
           const latLng = [
             position.coords.latitude,
             position.coords.longitude
           ];
 
-          L.marker(latLng)
-            .addTo(map)
-            .bindPopup("📍 Jij bent hier")
-            .openPopup();
+          /* Alleen de gebruiker krijgt een zichtbare positie-marker. */
+          if (window.userLocationMarker) {
+            window.userLocationMarker.setLatLng(latLng);
+          } else {
+            window.userLocationMarker = L.circleMarker(latLng, {
+              radius: 9,
+              weight: 3,
+              fillOpacity: 0.95,
+              color: "#ffffff",
+              fillColor: "#1683ff"
+            }).addTo(map);
+          }
 
           map.setView(
             latLng,
-            17
+            18
           );
 
-          status.textContent =
-            "📍 Jouw locatie is op de kaart gezet.";
+          try {
+
+            const nearest =
+              await selectNearestPlaceFromGps(
+                latLng[0],
+                latLng[1]
+              );
+
+            const roundedDistance =
+              Math.round(nearest.distance);
+
+            status.textContent =
+              `📍 Dichtstbijzijnde plek: ${nearest.name} (${roundedDistance} m). Klaar om te registreren.`;
+
+            const registrationTarget =
+              document.getElementById("locatie") ||
+              document.getElementById("bezoek") ||
+              document.getElementById("registreren");
+
+            if (registrationTarget) {
+              registrationTarget.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+              });
+            }
+
+            placeSelect.focus();
+
+          } catch (error) {
+
+            console.warn(
+              "Dichtstbijzijnde kaartlocatie kon niet worden bepaald:",
+              error
+            );
+
+            status.textContent =
+              "📍 Je locatie staat op de kaart, maar de dichtstbijzijnde plek kon niet automatisch worden bepaald.";
+
+          }
 
         },
 
@@ -1888,6 +2219,12 @@ document
           status.textContent =
             "⚠️ Locatie kon niet worden opgehaald.";
 
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 10000,
+          timeout: 15000
         }
 
       );
@@ -1950,7 +2287,7 @@ function renderDay() {
       ) / visits.length;
 
     summary.innerHTML =
-      `${visits.length} momenten geregistreerd, gemiddelde batterij is <span class="summary-highlight">${average.toFixed(0)}/100</span>.`;
+      `${visits.length} momenten geregistreerd, gemiddelde batterij is <span class="summary-highlight">${average.toFixed(0)}%</span>.`;
 
   }
 
@@ -2015,11 +2352,7 @@ function renderDay() {
         <td
           class="py-2 pr-2 font-bold"
           style="
-            color:${
-              TYPE_COLORS[
-                visit.type
-              ] || "#d4af37"
-            };
+            color:#f59e0b;
           "
         >
           ${Number(visit.score)}/100
@@ -3507,7 +3840,7 @@ function renderHistory() {
           <div class="text-right">
 
             <div class="text-sm font-bold text-eft-cream">
-              Gemiddeld ${average}/100
+              Gemiddeld ${average}%
             </div>
 
             <div class="text-xs text-eft-gold mt-1">
