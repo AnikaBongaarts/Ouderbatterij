@@ -1846,10 +1846,55 @@ function findExistingPoi(osmPlace) {
 
 
 async function selectNearestPlaceFromGps(lat, lng) {
+  // Gebruik exact dezelfde Sprookjesboom-herkenning als bij een kaartklik.
+  const sprookjesboomLat = 51.649958;
+  const sprookjesboomLng = 5.046735;
+  const sprookjesboomDistance = distanceMeters(
+    lat, lng, sprookjesboomLat, sprookjesboomLng
+  );
+
+  if (sprookjesboomDistance <= 12) {
+    const poi = POIS.find(
+      p => normalizePlaceName(p.name) === normalizePlaceName("Sprookjesboom")
+    );
+    if (poi) {
+      selectPlaceFromMap(poi);
+      return {
+        name: poi.name,
+        lat: sprookjesboomLat,
+        lng: sprookjesboomLng,
+        distance: sprookjesboomDistance,
+        poi
+      };
+    }
+  }
+
   const places = await loadCurrentOsmPlaces();
 
   if (!places.length) {
     throw new Error("Geen actuele locaties van de kaart gevonden.");
+  }
+
+  // Als OSM een Sprookjesboom-object bevat, krijgt dat net als bij een kaartklik voorrang.
+  const sprookjesboomOsm = places
+    .map(place => ({
+      ...place,
+      distance: distanceMeters(lat, lng, place.lat, place.lng),
+      poi: findExistingPoi(place)
+    }))
+    .filter(place =>
+      normalizePlaceName(place.name) === normalizePlaceName("Sprookjesboom")
+    )
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  if (sprookjesboomOsm && sprookjesboomOsm.distance <= 35) {
+    const poi = POIS.find(
+      p => normalizePlaceName(p.name) === normalizePlaceName("Sprookjesboom")
+    );
+    if (poi) {
+      selectPlaceFromMap(poi);
+      return { ...sprookjesboomOsm, poi };
+    }
   }
 
   const category =
@@ -1977,6 +2022,29 @@ async function selectNearestPlaceFromMapClick(lat, lng) {
 
   const places =
     await loadCurrentOsmPlaces();
+
+  const sprookjesboomOsm = places
+    .map(place => ({
+      ...place,
+      distance: distanceMeters(lat, lng, place.lat, place.lng),
+      poi: findExistingPoi(place)
+    }))
+    .filter(place =>
+      normalizePlaceName(place.name) === normalizePlaceName("Sprookjesboom")
+    )
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  // Als de kaart zelf een Sprookjesboom-object bevat, krijgt dat altijd
+  // voorrang boven muziekpaddenstoelen en andere nabije kaartobjecten.
+  if (sprookjesboomOsm && sprookjesboomOsm.distance <= 35) {
+    const poi = POIS.find(
+      p => normalizePlaceName(p.name) === normalizePlaceName("Sprookjesboom")
+    );
+    if (poi) {
+      selectPlaceFromMap(poi);
+      return { ...sprookjesboomOsm, poi };
+    }
+  }
 
   const nearest =
     places
