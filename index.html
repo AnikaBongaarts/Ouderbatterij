@@ -6,6 +6,29 @@
 
 <title>De Ouderbatterij Efteling tracker</title>
 
+<!-- =========================================================
+     "TOEVOEGEN AAN BEELDSCHERM" / APP-ICOON
+     Zorgt dat logo.png gebruikt wordt als appicoon wanneer de
+     site op een iPhone of Android-telefoon aan het beginscherm
+     wordt toegevoegd (gebruikt hetzelfde logo.png dat al naast
+     index.html staat, geen extra bestanden nodig).
+========================================================= -->
+
+<link rel="manifest" href="manifest.json">
+
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+<link rel="apple-touch-icon" sizes="152x152" href="logo.png">
+<link rel="apple-touch-icon" sizes="167x167" href="logo.png">
+
+<meta name="theme-color" content="#123524">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ouderbatterij">
+<meta name="application-name" content="Ouderbatterij">
+
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
@@ -47,6 +70,15 @@ tailwind.config = {
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  /* Voorkomt dat één te brede regel of tabel de hele pagina
+     horizontaal laat schuiven op telefoons. */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -58,6 +90,29 @@ body {
     );
 }
 
+/* Ruimte houden voor de "home indicator" balk onderaan op iPhone.
+   (body.pb-10 heeft hogere CSS-specificiteit dan Tailwind's .pb-10,
+   dus dit overschrijft de utility-class op een veilige manier.) */
+body.pb-10 {
+  padding-bottom:
+    calc(2.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Alle randstandige containers mogen nooit breder worden dan het scherm. */
+main,
+.banner-inner,
+section {
+  max-width: 100%;
+}
+
+/* Zorgt dat tekstvelden op iPhone niet automatisch inzoomen bij focus
+   (iOS zoomt in zodra een invoerveld een lettergrootte < 16px heeft). */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
 /* =========================================================
    STICKY BANNER
 ========================================================= */
@@ -66,7 +121,11 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
-  padding: .65rem .75rem .7rem;
+  padding:
+    calc(.65rem + env(safe-area-inset-top, 0px))
+    calc(.75rem + env(safe-area-inset-right, 0px))
+    .7rem
+    calc(.75rem + env(safe-area-inset-left, 0px));
   background: rgba(255,255,255,.96);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -174,7 +233,11 @@ body {
 
 @media (max-width: 700px) {
   .banner-shell {
-    padding: .5rem .55rem .55rem;
+    padding:
+      calc(.5rem + env(safe-area-inset-top, 0px))
+      calc(.55rem + env(safe-area-inset-right, 0px))
+      .55rem
+      calc(.55rem + env(safe-area-inset-left, 0px));
   }
 
   .brand-logo {
@@ -192,16 +255,49 @@ body {
 
   .modern-tabs {
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .modern-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-tab {
+    flex: 0 0 auto;
     font-size: .7rem;
-    padding: .5rem .55rem;
+    padding: .5rem .6rem;
   }
 
   .banner-music {
     font-size: .68rem;
     padding: .5rem .65rem;
+  }
+
+  /* Kleinere kaart en grafieken op telefoons: minder scrollen,
+     sneller zichtbaar, en past beter binnen het scherm. */
+  #map {
+    height: 280px;
+  }
+
+  .chart-wrap {
+    height: 300px;
+  }
+
+  .overview-chart-wrap {
+    height: 320px;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-title {
+    font-size: 1.3rem;
+  }
+
+  .nav-tab {
+    font-size: .64rem;
+    padding: .45rem .5rem;
   }
 }
 
@@ -230,6 +326,12 @@ body {
   position: relative;
   height: 440px;
   width: 100%;
+}
+
+/* Zorgt dat brede tabellen prettig scrollen op een touchscreen
+   in plaats van de hele pagina scheef te trekken. */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
 
 .chart-empty {
@@ -434,6 +536,14 @@ input[type=range]::-moz-range-thumb {
           📈 Meerdere dagen
         </button>
 
+        <button
+          id="viewStoryBtn"
+          class="nav-tab"
+          type="button"
+        >
+          🤣 Dagverhaal
+        </button>
+
       </nav>
 
       <button
@@ -562,7 +672,7 @@ input[type=range]::-moz-range-thumb {
      REGISTREREN
 ========================================================= -->
 
-<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+<section id="registrationSection" class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
 
   <div class="flex flex-wrap items-start justify-between gap-2">
 
@@ -690,6 +800,23 @@ input[type=range]::-moz-range-thumb {
 
     </div>
 
+
+    <div class="sm:col-span-2">
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        📝 Notitie
+        <span class="text-xs text-eft-cream/50">(optioneel)</span>
+      </label>
+
+      <textarea
+        id="visitNote"
+        rows="2"
+        placeholder="Bijvoorbeeld: lange wachtrij, lekker ijsje, of een dutje in de wandelwagen…"
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      ></textarea>
+
+    </div>
+
   </div>
 
 
@@ -731,6 +858,11 @@ input[type=range]::-moz-range-thumb {
       <p
         id="daySummary"
         class="text-xs text-eft-cream/55"
+      ></p>
+
+      <p
+        id="dayDistanceSummary"
+        class="text-xs text-eft-cream/55 mt-1"
       ></p>
 
     </div>
@@ -967,6 +1099,85 @@ input[type=range]::-moz-range-thumb {
 
 </div>
 
+
+<!-- =========================================================
+     DAGVERHAAL
+========================================================= -->
+
+<div
+  id="storyView"
+  class="hidden space-y-5"
+>
+
+<section class="bg-eft-green/60 gold-border rounded-2xl p-5 shadow-xl">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+
+    <div>
+
+      <h2 class="font-display text-xl text-eft-gold">
+        🤣 Dagverhaal
+      </h2>
+
+      <p class="text-xs text-eft-cream/55">
+        Een grappig verhaal, automatisch samengesteld uit jullie eigen geregistreerde momenten van die dag.
+        Er wordt niets verzonnen wat niet echt is opgeslagen.
+      </p>
+
+    </div>
+
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-4">
+
+    <div>
+
+      <label class="block text-sm mb-1 text-eft-cream/80">
+        Kies een dag
+      </label>
+
+      <select
+        id="storyDaySelect"
+        class="w-full rounded-lg bg-eft-cream text-eft-green px-3 py-2 font-medium"
+      ></select>
+
+    </div>
+
+  </div>
+
+  <p
+    id="storyEmpty"
+    class="hidden text-sm text-eft-cream/50 text-center py-6"
+  >
+    Voor deze dag zijn nog geen momenten geregistreerd, dus is er nog geen verhaal te vertellen.
+  </p>
+
+  <div id="storyContent">
+
+    <p
+      id="storyText"
+      class="text-eft-cream/90 leading-relaxed whitespace-pre-line"
+    ></p>
+
+    <button
+      id="storyRegenBtn"
+      type="button"
+      class="mt-4 text-xs bg-eft-green2 hover:bg-eft-gold hover:text-eft-green text-eft-cream px-3 py-2 rounded-lg transition"
+    >
+      🔄 Andere versie
+    </button>
+
+    <div
+      id="storyStats"
+      class="grid sm:grid-cols-2 gap-3 mt-5 text-sm"
+    ></div>
+
+  </div>
+
+</section>
+
+</div>
+
 </main>
 
 
@@ -1192,6 +1403,9 @@ const backgroundMusic =
 const musicBtn =
   document.getElementById("musicBtn");
 
+const visitNote =
+  document.getElementById("visitNote");
+
 
 /* =========================================================
    HELPERS
@@ -1340,6 +1554,53 @@ function escapeHtml(value) {
 
 
 /* =========================================================
+   AFSTAND & DUUR HELPERS
+========================================================= */
+
+function formatDistance(meters) {
+
+  if (
+    typeof meters !== "number" ||
+    Number.isNaN(meters)
+  ) {
+    return "niet gemeten";
+  }
+
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(2)} km`;
+  }
+
+  return `${Math.round(meters)} m`;
+
+}
+
+
+function formatDuration(minutes) {
+
+  if (
+    typeof minutes !== "number" ||
+    Number.isNaN(minutes)
+  ) {
+    return "niet beschikbaar";
+  }
+
+  if (minutes >= 60) {
+
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+
+    return m
+      ? `${h}u ${m}min`
+      : `${h}u`;
+
+  }
+
+  return `${Math.round(minutes)} min`;
+
+}
+
+
+/* =========================================================
    STORAGE
 ========================================================= */
 
@@ -1426,7 +1687,21 @@ state.visits =
     ...v,
     score: Number(v.score),
     type: v.type || "overig",
-    realm: v.realm || ""
+    realm: v.realm || "",
+    note:
+      typeof v.note === "string"
+        ? v.note
+        : "",
+    startTime: v.startTime || null,
+    endTime: v.endTime || null,
+    durationMinutes:
+      typeof v.durationMinutes === "number"
+        ? v.durationMinutes
+        : null,
+    distance:
+      typeof v.distance === "number"
+        ? v.distance
+        : null
   }));
 
 state.days = [
@@ -1519,36 +1794,50 @@ function populatePlaceSelect() {
 }
 
 
+function handlePlaceSelection() {
+
+  if (
+    placeSelect.value ===
+    "__custom__"
+  ) {
+
+    customPlace.classList.remove(
+      "hidden"
+    );
+
+    customPlace.focus();
+
+  } else {
+
+    customPlace.classList.add(
+      "hidden"
+    );
+
+  }
+
+}
+
+
 categorySelect.addEventListener(
   "change",
+  populatePlaceSelect
+);
+
+/* Op telefoon wordt de keuze direct verwerkt zodra de waarde verandert. */
+categorySelect.addEventListener(
+  "input",
   populatePlaceSelect
 );
 
 
 placeSelect.addEventListener(
   "change",
-  () => {
+  handlePlaceSelection
+);
 
-    if (
-      placeSelect.value ===
-      "__custom__"
-    ) {
-
-      customPlace.classList.remove(
-        "hidden"
-      );
-
-      customPlace.focus();
-
-    } else {
-
-      customPlace.classList.add(
-        "hidden"
-      );
-
-    }
-
-  }
+placeSelect.addEventListener(
+  "input",
+  handlePlaceSelection
 );
 
 
@@ -2302,6 +2591,193 @@ document
 
 
 /* =========================================================
+   TIJDREGISTRATIE & AUTOMATISCHE AFSTAND PER BEZOEK
+========================================================= */
+
+let pendingVisitStart = null;
+let geoWatchId = null;
+let lastGeoPos = null;
+let visitDistanceMeters = 0;
+
+/* Kleine GPS-afwijkingen (stilstaan) tellen niet mee als beweging. */
+const GPS_JITTER_THRESHOLD_M = 8;
+
+
+function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
+
+  const R = 6371000;
+
+  const toRad =
+    deg => (deg * Math.PI) / 180;
+
+  const dLat =
+    toRad(lat2 - lat1);
+
+  const dLon =
+    toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  return R * c;
+
+}
+
+
+function startGeoTracking() {
+
+  if (geoWatchId !== null) {
+    return;
+  }
+
+  if (
+    !("geolocation" in navigator)
+  ) {
+    /* GPS niet beschikbaar: de rest van de app blijft gewoon werken. */
+    return;
+  }
+
+  try {
+
+    geoWatchId =
+      navigator.geolocation.watchPosition(
+
+        position => {
+
+          const lat =
+            position.coords.latitude;
+
+          const lng =
+            position.coords.longitude;
+
+          if (lastGeoPos) {
+
+            const delta =
+              haversineDistanceMeters(
+                lastGeoPos.lat,
+                lastGeoPos.lng,
+                lat,
+                lng
+              );
+
+            if (
+              delta >=
+              GPS_JITTER_THRESHOLD_M
+            ) {
+
+              visitDistanceMeters +=
+                delta;
+
+              lastGeoPos =
+                { lat, lng };
+
+            }
+            /* Kleinere afwijking dan de drempel = ruis, niet meetellen. */
+
+          } else {
+
+            lastGeoPos =
+              { lat, lng };
+
+          }
+
+        },
+
+        () => {
+          /* Toestemming geweigerd of GPS niet beschikbaar: negeer stil, app blijft werken. */
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 20000
+        }
+
+      );
+
+  } catch (error) {
+    /* Geolocation niet ondersteund: negeer stil. */
+  }
+
+}
+
+
+function stopGeoTracking() {
+
+  if (
+    geoWatchId !== null &&
+    "geolocation" in navigator
+  ) {
+
+    try {
+      navigator.geolocation.clearWatch(
+        geoWatchId
+      );
+    } catch (error) {
+      /* negeer */
+    }
+
+  }
+
+  geoWatchId = null;
+  lastGeoPos = null;
+
+}
+
+
+function beginVisitTrackingIfNeeded() {
+
+  if (pendingVisitStart) {
+    return;
+  }
+
+  pendingVisitStart = new Date();
+
+  startGeoTracking();
+
+}
+
+
+function resetVisitTracking() {
+
+  stopGeoTracking();
+
+  pendingVisitStart = null;
+  visitDistanceMeters = 0;
+
+}
+
+
+const registrationSection =
+  document.getElementById(
+    "registrationSection"
+  );
+
+if (registrationSection) {
+
+  registrationSection.addEventListener(
+    "focusin",
+    beginVisitTrackingIfNeeded
+  );
+
+  registrationSection.addEventListener(
+    "pointerdown",
+    beginVisitTrackingIfNeeded
+  );
+
+}
+
+
+/* =========================================================
    DAGOVERZICHT
 ========================================================= */
 
@@ -2360,6 +2836,38 @@ function renderDay() {
   }
 
 
+  const distanceSummary =
+    document.getElementById(
+      "dayDistanceSummary"
+    );
+
+  if (distanceSummary) {
+
+    const measuredVisits =
+      visits.filter(
+        v => typeof v.distance === "number"
+      );
+
+    if (measuredVisits.length) {
+
+      const totalDistance =
+        measuredVisits.reduce(
+          (sum, v) => sum + v.distance,
+          0
+        );
+
+      distanceSummary.textContent =
+        `🚶 Totaal gelopen deze dag: ${formatDistance(totalDistance)}`;
+
+    } else {
+
+      distanceSummary.textContent = "";
+
+    }
+
+  }
+
+
   const body =
     document.getElementById(
       "historyBody"
@@ -2405,16 +2913,32 @@ function renderDay() {
           )}
         </td>
 
-        <td class="py-2 pr-2">
+        <td class="py-2 pr-2 align-top">
           ${escapeHtml(
             visit.place
           )}
+          ${
+            visit.note
+              ? `<div class="text-xs text-eft-cream/50 mt-0.5 italic">📝 ${escapeHtml(visit.note)}</div>`
+              : ""
+          }
         </td>
 
-        <td class="py-2 pr-2 whitespace-nowrap">
-          ${fmtTime(
-            visit.dateTime
-          )}
+        <td class="py-2 pr-2 whitespace-nowrap align-top">
+          ${
+            visit.startTime && visit.endTime
+              ? `${fmtTime(visit.startTime)} – ${fmtTime(visit.endTime)}${
+                  typeof visit.durationMinutes === "number"
+                    ? ` (${visit.durationMinutes} min)`
+                    : ""
+                }`
+              : fmtTime(visit.dateTime)
+          }
+          ${
+            typeof visit.distance === "number"
+              ? `<div class="text-xs text-eft-cream/50 mt-0.5">🚶 ${escapeHtml(formatDistance(visit.distance))}</div>`
+              : ""
+          }
         </td>
 
         <td
@@ -3644,6 +4168,11 @@ function setView(view) {
       "multiView"
     );
 
+  const storyView =
+    document.getElementById(
+      "storyView"
+    );
+
 
   historyView.classList.toggle(
     "hidden",
@@ -3659,6 +4188,15 @@ function setView(view) {
     "hidden",
     view !== "multi"
   );
+
+  if (storyView) {
+
+    storyView.classList.toggle(
+      "hidden",
+      view !== "story"
+    );
+
+  }
 
 
   updateViewButtons();
@@ -3724,6 +4262,20 @@ function updateViewButtons() {
       "tab-active",
       currentView === "multi"
     );
+
+  const storyBtn =
+    document.getElementById(
+      "viewStoryBtn"
+    );
+
+  if (storyBtn) {
+
+    storyBtn.classList.toggle(
+      "tab-active",
+      currentView === "story"
+    );
+
+  }
 
 }
 
@@ -3799,9 +4351,118 @@ document
   );
 
 
+const viewStoryBtnEl =
+  document.getElementById(
+    "viewStoryBtn"
+  );
+
+if (viewStoryBtnEl) {
+
+  viewStoryBtnEl.addEventListener(
+    "click",
+    () => {
+
+      populateStoryDaySelect();
+
+      setView("story");
+
+      renderStory();
+
+    }
+  );
+
+}
+
+
 /* =========================================================
    GESCHIEDENIS
 ========================================================= */
+
+let pendingHistoryDeleteDay = "";
+
+function showHistoryDeleteConfirm(day) {
+  const dayKey = String(day || "");
+  if (!dayKey) return;
+
+  let dialog = document.getElementById("historyDeleteDialog");
+
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.id = "historyDeleteDialog";
+    dialog.style.cssText =
+      "border:0;border-radius:16px;padding:0;max-width:calc(100% - 32px);width:380px;background:#1f2937;color:white;box-shadow:0 20px 50px rgba(0,0,0,.45);";
+
+    dialog.innerHTML = `
+      <div style="padding:22px">
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Weet je het zeker?</div>
+        <div id="historyDeleteMessage" style="font-size:14px;line-height:1.5;color:#d1d5db;margin-bottom:20px"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button type="button" id="historyDeleteCancel" style="padding:9px 14px;border-radius:10px;border:1px solid #6b7280;background:transparent;color:white">Annuleren</button>
+          <button type="button" id="historyDeleteConfirm" style="padding:9px 14px;border-radius:10px;border:0;background:#dc2626;color:white;font-weight:700">Verwijderen</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      dialog.close();
+      pendingHistoryDeleteDay = "";
+    });
+
+    dialog.querySelector("#historyDeleteCancel").addEventListener("click", () => {
+      dialog.close();
+      pendingHistoryDeleteDay = "";
+    });
+
+    dialog.querySelector("#historyDeleteConfirm").addEventListener("click", () => {
+      const confirmedDay = pendingHistoryDeleteDay;
+      dialog.close();
+      pendingHistoryDeleteDay = "";
+      window.deleteHistoryDay(confirmedDay, true);
+    });
+  }
+
+  pendingHistoryDeleteDay = dayKey;
+  dialog.querySelector("#historyDeleteMessage").textContent =
+    `Weet je zeker dat je ${fmtDate(dayKey)} wilt verwijderen?`;
+
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute("open", "");
+  }
+}
+
+window.deleteHistoryDay = function(day, confirmed) {
+
+  const dayKey = String(day || "");
+  if (!dayKey) return;
+
+  if (!confirmed) {
+    showHistoryDeleteConfirm(dayKey);
+    return;
+  }
+
+  state.days = (Array.isArray(state.days) ? state.days : [])
+    .filter(d => String(d) !== dayKey);
+
+  state.visits = (Array.isArray(state.visits) ? state.visits : [])
+    .filter(visit => String(visit.day) !== dayKey);
+
+  state.overviewDays = (Array.isArray(state.overviewDays) ? state.overviewDays : [])
+    .filter(d => String(d) !== dayKey);
+
+  if (String(state.active) === dayKey) {
+    state.active = todayKey();
+  }
+
+  saveState();
+  renderAll();
+  renderHistory();
+};
+
 
 function renderHistory() {
 
@@ -3822,7 +4483,6 @@ function renderHistory() {
 
 
   list.innerHTML = "";
-
 
   const days =
     sortedDays().filter(
@@ -3874,19 +4534,15 @@ function renderHistory() {
           : "—";
 
 
-      const button =
+      const row =
         document.createElement(
-          "button"
+          "div"
         );
 
-      button.type =
-        "button";
+      row.className =
+        "w-full bg-eft-green2/70 hover:bg-eft-green2 gold-border rounded-xl p-4 transition";
 
-      button.className =
-        "w-full text-left bg-eft-green2/70 hover:bg-eft-green2 gold-border rounded-xl p-4 transition";
-
-
-      button.innerHTML = `
+      row.innerHTML = `
 
         <div class="flex flex-wrap items-center justify-between gap-3">
 
@@ -3911,8 +4567,22 @@ function renderHistory() {
               Gemiddeld ${average}%
             </div>
 
-            <div class="text-xs text-eft-gold mt-1">
-              Bekijk bezoek →
+            <div class="flex items-center justify-end gap-3 mt-1">
+              <button
+                type="button"
+                class="text-xs text-eft-gold underline"
+                data-view-day="${escapeHtml(day)}"
+              >
+                Bekijk bezoek →
+              </button>
+
+              <button
+                type="button"
+                class="text-xs text-red-300 underline"
+                data-delete-day="${escapeHtml(day)}"
+              >
+                Verwijder dag
+              </button>
             </div>
 
           </div>
@@ -3922,25 +4592,35 @@ function renderHistory() {
       `;
 
 
-      button.addEventListener(
-        "click",
-        () => {
+      row
+        .querySelector("[data-view-day]")
+        .addEventListener(
+          "click",
+          () => {
 
-          state.active =
-            day;
+            state.active =
+              day;
 
-          saveState();
+            saveState();
 
-          renderAll();
+            renderAll();
 
-          setView("today");
+            setView("today");
 
-        }
-      );
+          }
+        );
 
+      const deleteButton =
+        row.querySelector("[data-delete-day]");
+
+      deleteButton.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        window.deleteHistoryDay(day);
+      });
 
       list.appendChild(
-        button
+        row
       );
 
     }
@@ -4111,6 +4791,31 @@ document
       }
 
 
+      /* Zorg dat er sowieso een starttijd is, ook als de gebruiker
+         het formulier niet had aangeraakt voor het opslaan. */
+      beginVisitTrackingIfNeeded();
+
+      const visitStart =
+        pendingVisitStart ||
+        new Date();
+
+      const visitEnd =
+        new Date();
+
+      const visitDurationMinutes =
+        Math.max(
+          0,
+          Math.round(
+            (visitEnd - visitStart) / 60000
+          )
+        );
+
+      const visitDistance =
+        Math.round(
+          visitDistanceMeters
+        );
+
+
       const visit = {
 
         id:
@@ -4135,7 +4840,24 @@ document
         score:
           Number(
             scoreSlider.value
-          )
+          ),
+
+        note:
+          visitNote
+            ? visitNote.value.trim()
+            : "",
+
+        startTime:
+          visitStart.toISOString(),
+
+        endTime:
+          visitEnd.toISOString(),
+
+        durationMinutes:
+          visitDurationMinutes,
+
+        distance:
+          visitDistance
 
       };
 
@@ -4143,6 +4865,13 @@ document
       state.visits.push(
         visit
       );
+
+
+      resetVisitTracking();
+
+      if (visitNote) {
+        visitNote.value = "";
+      }
 
 
       state.active =
@@ -4258,6 +4987,598 @@ musicBtn.addEventListener(
 
 
 /* =========================================================
+   DAGVERHAAL (lokaal, geen AI/server — puur op basis van
+   de eigen opgeslagen gegevens van de gekozen dag)
+========================================================= */
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+
+function computeDayStoryStats(day) {
+
+  const visits = dayVisits(day);
+
+  if (!visits.length) {
+    return null;
+  }
+
+  const endScore =
+    Number(visits[visits.length - 1].score);
+
+  const averageScore =
+    visits.reduce(
+      (sum, v) => sum + Number(v.score),
+      0
+    ) / visits.length;
+
+  const distances =
+    visits
+      .map(v => (typeof v.distance === "number" ? v.distance : null))
+      .filter(d => d !== null);
+
+  const totalDistance =
+    distances.length
+      ? distances.reduce((a, b) => a + b, 0)
+      : null;
+
+  let biggestDip = null;
+
+  for (let i = 1; i < visits.length; i++) {
+
+    const delta =
+      Number(visits[i].score) -
+      Number(visits[i - 1].score);
+
+    if (
+      delta < 0 &&
+      (biggestDip === null || delta < biggestDip.delta)
+    ) {
+
+      biggestDip = {
+        delta,
+        from: visits[i - 1],
+        to: visits[i]
+      };
+
+    }
+
+  }
+
+  let topVisit = visits[0];
+
+  visits.forEach(v => {
+    if (Number(v.score) > Number(topVisit.score)) {
+      topVisit = v;
+    }
+  });
+
+  const durations =
+    visits
+      .map(v =>
+        typeof v.durationMinutes === "number"
+          ? v.durationMinutes
+          : null
+      )
+      .filter(d => d !== null);
+
+  const totalDuration =
+    durations.length
+      ? durations.reduce((a, b) => a + b, 0)
+      : null;
+
+  return {
+    day,
+    visits,
+    endScore,
+    averageScore,
+    totalDistance,
+    biggestDip,
+    topVisit,
+    totalDuration
+  };
+
+}
+
+
+const STORY_OPENERS = [
+
+  (dateStr, count, avgScore) =>
+    `Wat een dag was het, ${dateStr}! In totaal werden er ${count} moment${count === 1 ? "" : "en"} vastgelegd op de batterijmeter, met een gemiddelde batterijstand van ${avgScore}%.`,
+
+  (dateStr, count, avgScore) =>
+    `Verslag van ${dateStr}: een dag vol avontuur, met ${count} officieel geregistreerde moment${count === 1 ? "" : "en"} en een gemiddelde energiestand van ${avgScore}%.`,
+
+  (dateStr, count, avgScore) =>
+    `Reisverslag ${dateStr} — ${count} stop${count === 1 ? "" : "s"}, talloze indrukken en gemiddeld genomen ${avgScore}% batterij over de hele dag.`,
+
+  (dateStr, count, avgScore) =>
+    `${dateStr} in het kort: ${count} moment${count === 1 ? "" : "en"}, een hoop plezier en een batterijmeter die gemiddeld op ${avgScore}% bleef hangen.`,
+
+  (dateStr, count, avgScore) =>
+    `Log van ${dateStr}: ${count} bezoek${count === 1 ? "" : "en"} geregistreerd; over de hele dag gemeten stond de ouderbatterij gemiddeld op ${avgScore}%.`
+
+];
+
+
+/*
+ * De zin per registratie wordt gekozen op basis van het batterijniveau
+ * ZELF op dat moment (niet alleen de verandering ten opzichte van
+ * de vorige registratie).
+ */
+
+const STORY_LOW_PHRASES = [
+
+  (place, time, score) =>
+    `Om ${time} bij ${place} stond de teller op een schrale ${score}% — de batterij was daar duidelijk bijna leeg.`,
+
+  (place, time, score) =>
+    `${place} (${time}) trof de familie op zijn zwakst: nog maar ${score}%.`,
+
+  (place, time, score) =>
+    `Rond ${time} was het bij ${place} alle hens aan dek, met een batterij van amper ${score}%.`,
+
+  (place, time, score) =>
+    `Bij ${place} om ${time} hing de batterij op de rand van het putje: ${score}%.`
+
+];
+
+
+const STORY_MIDLOW_PHRASES = [
+
+  (place, time, score) =>
+    `Om ${time} bij ${place} zakte de batterij weg naar een matige ${score}%.`,
+
+  (place, time, score) =>
+    `${place} (${time}) kostte zichtbaar energie: de meter zakte naar ${score}%.`,
+
+  (place, time, score) =>
+    `Rond ${time} was ${place} net iets te veel: nog maar ${score}% over.`,
+
+  (place, time, score) =>
+    `Bij ${place} om ${time} begon het te knagen aan de batterij, die op ${score}% uitkwam.`
+
+];
+
+
+const STORY_MIDHIGH_PHRASES = [
+
+  (place, time, score) =>
+    `Om ${time} bij ${place} hield de batterij zich prima staande op ${score}%.`,
+
+  (place, time, score) =>
+    `${place} (${time}) ging goed: een nette ${score}% op de meter.`,
+
+  (place, time, score) =>
+    `Rond ${time} bleef het bij ${place} lekker in balans, met ${score}% batterij.`,
+
+  (place, time, score) =>
+    `Bij ${place} om ${time} stond de teller solide op ${score}%.`
+
+];
+
+
+const STORY_HIGH_PHRASES = [
+
+  (place, time, score) =>
+    `Om ${time} bij ${place} schoot de batterij omhoog naar een topvorm van ${score}%.`,
+
+  (place, time, score) =>
+    `${place} (${time}) was een schot in de roos: maar liefst ${score}% batterij.`,
+
+  (place, time, score) =>
+    `Rond ${time} zat iedereen bij ${place} duidelijk in hun element, met een stralende ${score}%.`,
+
+  (place, time, score) =>
+    `Bij ${place} om ${time} stond de meter bijna vol: ${score}%.`
+
+];
+
+
+const STORY_CLOSERS = [
+
+  (topPlace, endScore, avgScore) =>
+    `Aan het einde van de dag stond de batterij op ${endScore}% (gemiddeld ${avgScore}% over de dag), met ${topPlace} als onbetwiste topper.`,
+
+  (topPlace, endScore, avgScore) =>
+    `Conclusie: ${topPlace} was het hoogtepunt, de dag eindigde op ${endScore}% en gemiddeld bleef de batterij op ${avgScore}% hangen.`,
+
+  (topPlace, endScore, avgScore) =>
+    `Al met al een dag om te onthouden, met ${topPlace} als uitschieter, een eindstand van ${endScore}% en een daggemiddelde van ${avgScore}%.`,
+
+  (topPlace, endScore, avgScore) =>
+    `Zo kwam er een einde aan een memorabele dag: ${topPlace} won overtuigend, de batterij eindigde op ${endScore}% en schommelde gemiddeld rond de ${avgScore}%.`
+
+];
+
+
+/*
+ * Manieren om een eigen notitie natuurlijk (en met een knipoog) in de
+ * zin te verwerken, zonder er expliciet "notitie" van te maken.
+ * De toon wordt gekozen op basis van het soort notitie: wachten,
+ * eten, vermoeidheid, emotie, weer of enthousiasme. Er wordt
+ * uitsluitend de eigen tekst van de gebruiker gebruikt — er wordt
+ * nooit iets verzonnen.
+ */
+
+function lowerFirst(text) {
+  return `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+}
+
+
+const NOTE_KEYWORD_GROUPS = {
+
+  wachten: [
+    "wachtrij", "wachten", "rij", "file", "geduld"
+  ],
+
+  eten: [
+    "ijsje", "eten", "lunch", "drinken", "snack", "patat",
+    "poffertjes", "hongerig", "trek", "dorst", "snoep"
+  ],
+
+  moe: [
+    "moe", "dutje", "slaap", "slapen", "uitgeput", "slaperig"
+  ],
+
+  emotie: [
+    "huilbui", "huilen", "boos", "verdrietig", "driftbui",
+    "overprikkeld", "moeilijk", "chagrijnig", "zeurpiet"
+  ],
+
+  weer: [
+    "regen", "nat", "koud", "warm", "zon", "hitte", "wind", "storm"
+  ],
+
+  leuk: [
+    "leuk", "top", "geweldig", "lachen", "gelukkig", "blij",
+    "superleuk", "gaaf", "fantastisch", "genoten"
+  ]
+
+};
+
+
+function detectNoteCategory(note) {
+
+  const lower = note.toLowerCase();
+
+  for (const category of Object.keys(NOTE_KEYWORD_GROUPS)) {
+
+    const keywords = NOTE_KEYWORD_GROUPS[category];
+
+    if (keywords.some(keyword => lower.includes(keyword))) {
+      return category;
+    }
+
+  }
+
+  return "algemeen";
+
+}
+
+
+const STORY_NOTE_CONNECTORS = {
+
+  wachten: [
+
+    note => ` Al was er eerst nog een testje in geduld: ${lowerFirst(note)}.`,
+
+    note => ` Niet zonder slag of stoot trouwens — ${lowerFirst(note)}.`,
+
+    note => ` Wachten, wachten, wachten… ${note}.`,
+
+    note => ` (voor de goede orde: ${lowerFirst(note)})`
+
+  ],
+
+  eten: [
+
+    note => ` Tussendoor natuurlijk ook goed getankt: ${lowerFirst(note)}.`,
+
+    note => ` De buikjes werden zeker niet vergeten, want ${lowerFirst(note)}.`,
+
+    note => ` Smullen geblazen — ${lowerFirst(note)}.`,
+
+    note => ` (bonusronde eten: ${note})`
+
+  ],
+
+  moe: [
+
+    note => ` De batterij kreeg gezelschap van slaperige oogjes: ${lowerFirst(note)}.`,
+
+    note => ` Tijd voor een adempauze, want ${lowerFirst(note)}.`,
+
+    note => ` Het tempo zakte zienderogen — ${lowerFirst(note)}.`,
+
+    note => ` (${note} — een welverdiend rustmomentje)`
+
+  ],
+
+  emotie: [
+
+    note => ` Niet alles ging over rozen: ${lowerFirst(note)}.`,
+
+    note => ` Even een emotioneel intermezzo, want ${lowerFirst(note)}.`,
+
+    note => ` Daar ging het even mis — ${lowerFirst(note)}.`,
+
+    note => ` (${note} — gelukkig weer snel bijgetrokken)`
+
+  ],
+
+  weer: [
+
+    note => ` Het weer deed ook flink mee: ${lowerFirst(note)}.`,
+
+    note => ` Buiten was het geen pretje, want ${lowerFirst(note)}.`,
+
+    note => ` (weerbericht ter plekke: ${note})`
+
+  ],
+
+  leuk: [
+
+    note => ` En wat was het een feestje: ${lowerFirst(note)}.`,
+
+    note => ` Puur genieten, want ${lowerFirst(note)}.`,
+
+    note => ` Stralende gezichten alom — ${lowerFirst(note)}.`,
+
+    note => ` (${note} — dat mag gerust nog eens gebeuren)`
+
+  ],
+
+  algemeen: [
+
+    note => ` Trouwens, ${lowerFirst(note)}.`,
+
+    note => ` Er werd ook nog opgemerkt: ${lowerFirst(note)}.`,
+
+    note => ` Ook viel op dat ${lowerFirst(note)}.`,
+
+    note => ` Daarnaast: ${note}.`,
+
+    note => ` (${note})`
+
+  ]
+
+};
+
+
+function scorePhrasePool(score) {
+
+  if (score < 30) {
+    return STORY_LOW_PHRASES;
+  }
+
+  if (score < 50) {
+    return STORY_MIDLOW_PHRASES;
+  }
+
+  if (score < 75) {
+    return STORY_MIDHIGH_PHRASES;
+  }
+
+  return STORY_HIGH_PHRASES;
+
+}
+
+
+function generateStoryText(stats) {
+
+  const dateStr = fmtDate(stats.day);
+  const count = stats.visits.length;
+  const avgScore = Math.round(stats.averageScore);
+
+  const opener =
+    pickRandom(STORY_OPENERS)(dateStr, count, avgScore);
+
+  const sentences = [opener];
+
+  stats.visits.forEach(visit => {
+
+    const time =
+      fmtTime(visit.dateTime);
+
+    const place =
+      visit.place;
+
+    const score =
+      Number(visit.score);
+
+    /* De zin wordt gekozen op basis van het batterijniveau van déze registratie. */
+    let sentence =
+      pickRandom(scorePhrasePool(score))(
+        place, time, score
+      );
+
+    if (visit.note) {
+
+      const noteCategory =
+        detectNoteCategory(visit.note);
+
+      const notePool =
+        STORY_NOTE_CONNECTORS[noteCategory] ||
+        STORY_NOTE_CONNECTORS.algemeen;
+
+      sentence +=
+        pickRandom(notePool)(visit.note);
+
+    }
+
+    if (typeof visit.distance === "number" && visit.distance > 0) {
+      sentence +=
+        ` Onderweg werd daar ${formatDistance(visit.distance)} afgelegd.`;
+    }
+
+    sentences.push(sentence);
+
+  });
+
+  const closer =
+    pickRandom(STORY_CLOSERS)(
+      stats.topVisit.place,
+      stats.endScore,
+      avgScore
+    );
+
+  sentences.push(closer);
+
+  return sentences.join(" ");
+
+}
+
+
+function renderStoryStats(stats) {
+
+  const container =
+    document.getElementById("storyStats");
+
+  if (!container) {
+    return;
+  }
+
+  const dipText =
+    stats.biggestDip
+      ? `${stats.biggestDip.delta}% (van ${stats.biggestDip.from.place} naar ${stats.biggestDip.to.place})`
+      : "geen dip — alleen stijgingen of gelijk gebleven!";
+
+  const rows = [
+
+    ["🔋 Eindscore", `${stats.endScore}%`],
+    ["🔋 Gemiddelde batterij", `${Math.round(stats.averageScore)}%`],
+    ["🚶 Totale gelopen afstand", formatDistance(stats.totalDistance)],
+    ["📉 Grootste batterij-dip", dipText],
+    ["⭐ Moment van de dag", `${stats.topVisit.place} (${stats.topVisit.score}%)`],
+    ["🕐 Totale bezoektijd", formatDuration(stats.totalDuration)]
+
+  ];
+
+  container.innerHTML =
+    rows
+      .map(
+        ([label, value]) => `
+          <div class="bg-eft-green2/60 gold-border rounded-lg p-3">
+            <div class="text-xs text-eft-cream/55">${escapeHtml(label)}</div>
+            <div class="font-bold text-eft-gold mt-0.5">${escapeHtml(value)}</div>
+          </div>
+        `
+      )
+      .join("");
+
+}
+
+
+function populateStoryDaySelect() {
+
+  const select =
+    document.getElementById("storyDaySelect");
+
+  if (!select) {
+    return;
+  }
+
+  const days = sortedDays();
+  const previousValue = select.value;
+
+  select.innerHTML = "";
+
+  days.forEach(day => {
+
+    const opt =
+      document.createElement("option");
+
+    opt.value = day;
+
+    opt.textContent =
+      day === todayKey()
+        ? `Vandaag (${fmtDate(day)})`
+        : fmtDate(day);
+
+    select.appendChild(opt);
+
+  });
+
+  if (days.includes(previousValue)) {
+    select.value = previousValue;
+  } else if (days.includes(state.active)) {
+    select.value = state.active;
+  } else if (days.length) {
+    select.value = days[0];
+  }
+
+}
+
+
+function renderStory() {
+
+  const select =
+    document.getElementById("storyDaySelect");
+
+  const emptyEl =
+    document.getElementById("storyEmpty");
+
+  const contentEl =
+    document.getElementById("storyContent");
+
+  if (!select || !emptyEl || !contentEl) {
+    return;
+  }
+
+  const day = select.value;
+
+  const stats =
+    day ? computeDayStoryStats(day) : null;
+
+  if (!stats) {
+
+    emptyEl.classList.remove("hidden");
+    contentEl.classList.add("hidden");
+
+    return;
+
+  }
+
+  emptyEl.classList.add("hidden");
+  contentEl.classList.remove("hidden");
+
+  document.getElementById("storyText").textContent =
+    generateStoryText(stats);
+
+  renderStoryStats(stats);
+
+}
+
+
+const storyDaySelectEl =
+  document.getElementById("storyDaySelect");
+
+if (storyDaySelectEl) {
+
+  storyDaySelectEl.addEventListener(
+    "change",
+    renderStory
+  );
+
+}
+
+
+const storyRegenBtnEl =
+  document.getElementById("storyRegenBtn");
+
+if (storyRegenBtnEl) {
+
+  storyRegenBtnEl.addEventListener(
+    "click",
+    renderStory
+  );
+
+}
+
+
+/* =========================================================
    ALLES RENDEREN
 ========================================================= */
 
@@ -4274,6 +5595,12 @@ function renderAll() {
   renderOverviewChart();
 
   updateViewButtons();
+
+  if (
+    document.getElementById("storyDaySelect")
+  ) {
+    populateStoryDaySelect();
+  }
 
   saveState();
 
