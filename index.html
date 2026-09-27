@@ -6,14 +6,6 @@
 
 <title>De Ouderbatterij Efteling tracker</title>
 
-<!-- =========================================================
-     "TOEVOEGEN AAN BEELDSCHERM" / APP-ICOON
-     Zorgt dat logo.png gebruikt wordt als appicoon wanneer de
-     site op een iPhone of Android-telefoon aan het beginscherm
-     wordt toegevoegd (gebruikt hetzelfde logo.png dat al naast
-     index.html staat, geen extra bestanden nodig).
-========================================================= -->
-
 <link rel="manifest" href="manifest.json">
 
 <link rel="icon" href="logo.png" type="image/png">
@@ -541,7 +533,7 @@ input[type=range]::-moz-range-thumb {
           class="nav-tab"
           type="button"
         >
-          🤣 Dagverhaal
+          📖 Dagverhaal
         </button>
 
       </nav>
@@ -659,6 +651,11 @@ input[type=range]::-moz-range-thumb {
   <p
     id="locStatus"
     class="text-xs text-eft-cream/60 mt-2"
+  ></p>
+
+  <p
+    id="gpsTrackStatus"
+    class="text-xs text-eft-cream/50 mt-1"
   ></p>
 
   <div class="mt-3 text-xs text-eft-cream/50">
@@ -1116,12 +1113,11 @@ input[type=range]::-moz-range-thumb {
     <div>
 
       <h2 class="font-display text-xl text-eft-gold">
-        🤣 Dagverhaal
+        📖 Dagverhaal
       </h2>
 
       <p class="text-xs text-eft-cream/55">
-        Een grappig verhaal, automatisch samengesteld uit jullie eigen geregistreerde momenten van die dag.
-        Er wordt niets verzonnen wat niet echt is opgeslagen.
+        Een grappig verhaal, automatisch samengesteld uit de geregistreerde momenten van geselecteerde dag.
       </p>
 
     </div>
@@ -1692,16 +1688,18 @@ state.visits =
       typeof v.note === "string"
         ? v.note
         : "",
-    startTime: v.startTime || null,
-    endTime: v.endTime || null,
-    durationMinutes:
-      typeof v.durationMinutes === "number"
-        ? v.durationMinutes
-        : null,
     distance:
       typeof v.distance === "number"
         ? v.distance
-        : null
+        : null,
+    steps:
+      typeof v.steps === "number"
+        ? v.steps
+        : (
+            typeof v.distance === "number"
+              ? estimateSteps(v.distance)
+              : null
+          )
   }));
 
 state.days = [
@@ -2594,13 +2592,39 @@ document
    TIJDREGISTRATIE & AUTOMATISCHE AFSTAND PER BEZOEK
 ========================================================= */
 
-let pendingVisitStart = null;
+/*
+ * GPS volgt de wandeling TUSSEN twee registraties.
+ * Tijdregistratie staat hier bewust volledig los van.
+ *
+ * Na registratie #1:
+ *   GPS begint te meten.
+ * Bij registratie #2:
+ *   de gemeten afstand wordt aan registratie #2 gekoppeld.
+ * Daarna begint direct een nieuw traject voor registratie #3.
+ */
 let geoWatchId = null;
 let lastGeoPos = null;
-let visitDistanceMeters = 0;
+let routeDistanceMeters = 0;
+let routeTrackingDay = null;
 
-/* Kleine GPS-afwijkingen (stilstaan) tellen niet mee als beweging. */
 const GPS_JITTER_THRESHOLD_M = 8;
+const GPS_MAX_SEGMENT_M = 100;
+const GPS_MAX_ACCURACY_M = 50;
+const AVERAGE_STEP_LENGTH_M = 0.75;
+
+function estimateSteps(meters) {
+  if (typeof meters !== "number" || Number.isNaN(meters) || meters <= 0) {
+    return null;
+  }
+  return Math.round(meters / AVERAGE_STEP_LENGTH_M);
+}
+
+function formatSteps(steps) {
+  if (typeof steps !== "number" || Number.isNaN(steps)) {
+    return "niet gemeten";
+  }
+  return `±${steps.toLocaleString("nl-NL")} stappen`;
+}
 
 
 function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -2633,79 +2657,107 @@ function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
 }
 
 
-function startGeoTracking() {
+function startGeoTracking(day) {
+
+  if (!navigator.geolocation) {
+    const status = document.getElementById("locStatus");
+    if (status) {
+      status.textContent = "📍 GPS is niet beschikbaar op dit apparaat.";
+    }
+    return;
+  }
+
+  routeTrackingDay = day || routeTrackingDay;
+  routeDistanceMeters = 0;
+  lastGeoPos = null;
 
   if (geoWatchId !== null) {
     return;
   }
 
-  if (
-    !("geolocation" in navigator)
-  ) {
-    /* GPS niet beschikbaar: de rest van de app blijft gewoon werken. */
-    return;
+  const status = document.getElementById("locStatus");
+  const trackStatus = document.getElementById("gpsTrackStatus");
+  if (status) {
+    status.textContent = "📍 GPS actief: afstand sinds de vorige registratie wordt bijgehouden.";
+  }
+  if (trackStatus) {
+    trackStatus.textContent = "🚶 Vanaf de vorige registratie wordt je gelopen afstand gemeten.";
   }
 
   try {
 
-    geoWatchId =
-      navigator.geolocation.watchPosition(
+    geoWatchId = navigator.geolocation.watchPosition(
 
-        position => {
+      position => {
 
-          const lat =
-            position.coords.latitude;
+        const accuracy = Number(position.coords.accuracy);
 
-          const lng =
-            position.coords.longitude;
-
-          if (lastGeoPos) {
-
-            const delta =
-              haversineDistanceMeters(
-                lastGeoPos.lat,
-                lastGeoPos.lng,
-                lat,
-                lng
-              );
-
-            if (
-              delta >=
-              GPS_JITTER_THRESHOLD_M
-            ) {
-
-              visitDistanceMeters +=
-                delta;
-
-              lastGeoPos =
-                { lat, lng };
-
-            }
-            /* Kleinere afwijking dan de drempel = ruis, niet meetellen. */
-
-          } else {
-
-            lastGeoPos =
-              { lat, lng };
-
-          }
-
-        },
-
-        () => {
-          /* Toestemming geweigerd of GPS niet beschikbaar: negeer stil, app blijft werken. */
-        },
-
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 20000
+        /* Onnauwkeurige metingen niet gebruiken voor de loopafstand. */
+        if (
+          Number.isFinite(accuracy) &&
+          accuracy > GPS_MAX_ACCURACY_M
+        ) {
+          return;
         }
 
-      );
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        if (lastGeoPos) {
+
+          const delta = haversineDistanceMeters(
+            lastGeoPos.lat,
+            lastGeoPos.lng,
+            lat,
+            lng
+          );
+
+          /*
+           * Kleine GPS-ruis negeren.
+           * Ook extreem grote sprongen negeren: die zijn voor een
+           * wandeling in het park vrijwel altijd een GPS-fout.
+           */
+          if (
+            delta >= GPS_JITTER_THRESHOLD_M &&
+            delta <= GPS_MAX_SEGMENT_M
+          ) {
+            routeDistanceMeters += delta;
+            lastGeoPos = { lat, lng };
+          } else if (delta <= GPS_MAX_SEGMENT_M) {
+            /* Bij kleine ruis toch het referentiepunt bijwerken. */
+            lastGeoPos = { lat, lng };
+          }
+
+        } else {
+
+          lastGeoPos = { lat, lng };
+
+        }
+
+      },
+
+      () => {
+        const status = document.getElementById("locStatus");
+        if (status) {
+          status.textContent =
+            "⚠️ GPS kon niet worden gebruikt. Registraties blijven gewoon werken.";
+        }
+      },
+
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 20000
+      }
+
+    );
 
   } catch (error) {
-    /* Geolocation niet ondersteund: negeer stil. */
+    const status = document.getElementById("locStatus");
+    if (status) {
+      status.textContent =
+        "⚠️ GPS kon niet worden gestart. Registraties blijven gewoon werken.";
+    }
   }
 
 }
@@ -2719,9 +2771,7 @@ function stopGeoTracking() {
   ) {
 
     try {
-      navigator.geolocation.clearWatch(
-        geoWatchId
-      );
+      navigator.geolocation.clearWatch(geoWatchId);
     } catch (error) {
       /* negeer */
     }
@@ -2730,51 +2780,15 @@ function stopGeoTracking() {
 
   geoWatchId = null;
   lastGeoPos = null;
+  routeTrackingDay = null;
+  routeDistanceMeters = 0;
 
 }
 
 
-function beginVisitTrackingIfNeeded() {
-
-  if (pendingVisitStart) {
-    return;
-  }
-
-  pendingVisitStart = new Date();
-
-  startGeoTracking();
-
-}
-
-
-function resetVisitTracking() {
-
-  stopGeoTracking();
-
-  pendingVisitStart = null;
-  visitDistanceMeters = 0;
-
-}
-
-
-const registrationSection =
-  document.getElementById(
-    "registrationSection"
-  );
-
-if (registrationSection) {
-
-  registrationSection.addEventListener(
-    "focusin",
-    beginVisitTrackingIfNeeded
-  );
-
-  registrationSection.addEventListener(
-    "pointerdown",
-    beginVisitTrackingIfNeeded
-  );
-
-}
+/* De eerste registratie start het eerste wandeltraject.
+ * Daarna blijft GPS actief tot de volgende registratie en verder.
+ */
 
 
 /* =========================================================
@@ -2856,8 +2870,10 @@ function renderDay() {
           0
         );
 
+      const totalSteps = estimateSteps(totalDistance);
+
       distanceSummary.textContent =
-        `🚶 Totaal gelopen deze dag: ${formatDistance(totalDistance)}`;
+        `🚶 ${formatDistance(totalDistance)} · 👣 ${formatSteps(totalSteps)}`;
 
     } else {
 
@@ -2925,18 +2941,10 @@ function renderDay() {
         </td>
 
         <td class="py-2 pr-2 whitespace-nowrap align-top">
-          ${
-            visit.startTime && visit.endTime
-              ? `${fmtTime(visit.startTime)} – ${fmtTime(visit.endTime)}${
-                  typeof visit.durationMinutes === "number"
-                    ? ` (${visit.durationMinutes} min)`
-                    : ""
-                }`
-              : fmtTime(visit.dateTime)
-          }
+          ${fmtTime(visit.dateTime)}
           ${
             typeof visit.distance === "number"
-              ? `<div class="text-xs text-eft-cream/50 mt-0.5">🚶 ${escapeHtml(formatDistance(visit.distance))}</div>`
+              ? `<div class="text-xs text-eft-cream/50 mt-0.5">🚶 ${escapeHtml(formatDistance(visit.distance))} · 👣 ${escapeHtml(formatSteps(visit.steps ?? estimateSteps(visit.distance)))}</div>`
               : ""
           }
         </td>
@@ -3980,7 +3988,10 @@ function downloadCsv() {
       "Categorie",
       "Moment",
       "Rijk",
-      "Batterijscore"
+      "Batterijscore",
+      "Afstand sinds vorige registratie",
+      "Geschatte stappen",
+      "Notitie"
     ],
 
     ...visits.map(
@@ -4000,7 +4011,17 @@ function downloadCsv() {
 
         visit.realm || "",
 
-        visit.score
+        visit.score,
+
+        typeof visit.distance === "number"
+          ? Math.round(visit.distance)
+          : "",
+
+        typeof visit.steps === "number"
+          ? visit.steps
+          : "",
+
+        visit.note || ""
 
       ]
     )
@@ -4791,29 +4812,26 @@ document
       }
 
 
-      /* Zorg dat er sowieso een starttijd is, ook als de gebruiker
-         het formulier niet had aangeraakt voor het opslaan. */
-      beginVisitTrackingIfNeeded();
-
-      const visitStart =
-        pendingVisitStart ||
-        new Date();
-
-      const visitEnd =
-        new Date();
-
-      const visitDurationMinutes =
-        Math.max(
-          0,
-          Math.round(
-            (visitEnd - visitStart) / 60000
-          )
-        );
+      /*
+       * Het tijdstip is simpelweg het tijdstip dat de registratie
+       * wordt opgeslagen. Er is geen bezoektimer.
+       *
+       * De afstand hoort bij het traject sinds de vorige registratie.
+       * Bij de allereerste registratie is er dus nog geen afstand.
+       */
+      const hasPreviousRegistration =
+        dayVisits(day).length > 0;
 
       const visitDistance =
-        Math.round(
-          visitDistanceMeters
-        );
+        hasPreviousRegistration &&
+        routeTrackingDay === day
+          ? Math.round(routeDistanceMeters)
+          : null;
+
+      const visitSteps =
+        typeof visitDistance === "number"
+          ? estimateSteps(visitDistance)
+          : null;
 
 
       const visit = {
@@ -4847,17 +4865,11 @@ document
             ? visitNote.value.trim()
             : "",
 
-        startTime:
-          visitStart.toISOString(),
-
-        endTime:
-          visitEnd.toISOString(),
-
-        durationMinutes:
-          visitDurationMinutes,
-
         distance:
-          visitDistance
+          visitDistance,
+
+        steps:
+          visitSteps
 
       };
 
@@ -4866,8 +4878,18 @@ document
         visit
       );
 
+      /*
+       * Na deze registratie begint meteen het volgende traject.
+       * We houden de GPS-watch dus actief en wissen alleen de
+       * afstandsteller. Het huidige GPS-punt wordt opnieuw als
+       * referentie opgebouwd om een GPS-sprong rond het opslaan
+       * niet dubbel te tellen.
+       */
+      routeDistanceMeters = 0;
+      lastGeoPos = null;
+      routeTrackingDay = day;
 
-      resetVisitTracking();
+      startGeoTracking(day);
 
       if (visitNote) {
         visitNote.value = "";
@@ -5409,8 +5431,9 @@ function generateStoryText(stats) {
     }
 
     if (typeof visit.distance === "number" && visit.distance > 0) {
+      const steps = visit.steps ?? estimateSteps(visit.distance);
       sentence +=
-        ` Onderweg werd daar ${formatDistance(visit.distance)} afgelegd.`;
+        ` Onderweg werd daar ${formatDistance(visit.distance)} afgelegd, goed voor ongeveer ${formatSteps(steps)}.`;
     }
 
     sentences.push(sentence);
@@ -5450,9 +5473,9 @@ function renderStoryStats(stats) {
     ["🔋 Eindscore", `${stats.endScore}%`],
     ["🔋 Gemiddelde batterij", `${Math.round(stats.averageScore)}%`],
     ["🚶 Totale gelopen afstand", formatDistance(stats.totalDistance)],
+    ["👣 Geschatte stappen", formatSteps(estimateSteps(stats.totalDistance))],
     ["📉 Grootste batterij-dip", dipText],
-    ["⭐ Moment van de dag", `${stats.topVisit.place} (${stats.topVisit.score}%)`],
-    ["🕐 Totale bezoektijd", formatDuration(stats.totalDuration)]
+    ["⭐ Moment van de dag", `${stats.topVisit.place} (${stats.topVisit.score}%)`]
 
   ];
 
